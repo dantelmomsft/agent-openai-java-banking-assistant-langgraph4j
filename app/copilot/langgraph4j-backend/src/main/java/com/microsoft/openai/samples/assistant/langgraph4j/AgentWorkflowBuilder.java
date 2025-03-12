@@ -16,23 +16,31 @@ import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
+import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.action.NodeAction;
+import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.langchain4j.serializer.std.ChatMesssageSerializer;
 import org.bsc.langgraph4j.langchain4j.serializer.std.ToolExecutionRequestSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
+import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public class AgentWorkflowBuilder {
+
+
+    private final EdgeAction<AgentContext> superVisorRoute =  (state ) ->
+        state.intent().orElseGet( () ->
+                state.clarification().map( c -> SupervisorAgent.Clarification ).orElse(END) )
+     ;
 
     public CompiledGraph<AgentContext> build() throws GraphStateException {
 
@@ -47,13 +55,34 @@ public class AgentWorkflowBuilder {
 
         var serializer = new StateSerializer();
 
-        var graph = new StateGraph<>( AgentContext.SCHEMA, serializer );
+        var graph = new StateGraph<>( AgentContext.SCHEMA, serializer )
+                .addNode( "Supervisor", SupervisorAgent.of(modelThinking) )
+                .addNode( SupervisorAgent.Clarification, node_async( state -> Map.of() ) )
+                .addNode( SupervisorAgent.Intent.AccountInfo.name(), node_async( state -> Map.of() ) )
+                .addNode( SupervisorAgent.Intent.BillPayment.name(), node_async( state -> Map.of() ) )
+                .addNode( SupervisorAgent.Intent.TransactionHistory.name(), node_async( state -> Map.of() ) )
+                .addNode( SupervisorAgent.Intent.RepeatTransaction.name(), node_async( state -> Map.of() ) )
+                .addEdge(  START, "Supervisor" )
+                .addConditionalEdges( "Supervisor",
+                        edge_async(superVisorRoute),
+                        EdgeMappings.builder()
+                                .to( SupervisorAgent.Intent.names() )
+                                .to( SupervisorAgent.Clarification )
+                                .toEND()
+                                .build())
+                .addEdge( SupervisorAgent.Clarification, "Supervisor" )
+                .addEdge( SupervisorAgent.Intent.AccountInfo.name(), END )
+                .addEdge( SupervisorAgent.Intent.BillPayment.name(), END )
+                .addEdge( SupervisorAgent.Intent.TransactionHistory.name(), END  )
+                .addEdge( SupervisorAgent.Intent.RepeatTransaction.name(), END )
+                ;
 
-        graph.addNode( "supervisor", SupervisorAgent.of(modelThinking) );
-        graph.addEdge(  START, "supervisor" );
-        graph.addEdge( "supervisor", END );
+        var checkPointSaver = new MemorySaver();
 
-        var config = CompileConfig.builder().build();
+        var config = CompileConfig.builder()
+                        .checkpointSaver( checkPointSaver )
+                        .interruptBefore( SupervisorAgent.Clarification )
+                        .build();
 
         return graph.compile(config);
     }
@@ -73,9 +102,25 @@ class StateSerializer extends ObjectStreamStateSerializer<AgentContext> {
 class SupervisorAgent implements NodeAction<AgentContext> {
     private static final Logger log = LoggerFactory.getLogger(SupervisorAgent.class);
 
+    public static String Clarification = "Clarification";
+
+    public enum Intent {
+        BillPayment,
+        RepeatTransaction,
+        TransactionHistory,
+        AccountInfo;
+
+        public static List<String> names() {
+            return Arrays.stream(Intent.values())
+                    .map(Enum::name)
+                    .toList();
+        }
+    }
+
+
     static class Router {
         // @Description("Intent to route to next. If no intent are identified route to FINISH.")
-        @Description("Intent to route to next. If no intent are identified route to UNDEFINED.")
+        @Description("Intent to route to next. If no intent are identified route to Clarification.")
         String intent   ;
 
         //@Description("If you don't understand or if an intent is not identified be polite with the user, ask clarifying question also using the list of the available intents.")
@@ -87,11 +132,11 @@ class SupervisorAgent implements NodeAction<AgentContext> {
 
         @Override
         public String toString() {
-            return format( "Router[next: %s, clarification: %s]", intent, clarification);
+            return format( "Router[intent: %s, clarification: %s]", intent, clarification);
         }
 
         public Map<String,Object> toMap() {
-            if( "UNDEFINED".equalsIgnoreCase(intent) ) {
+            if(Clarification.equalsIgnoreCase(intent) ) {
                 return Map.of("clarification", clarification );
             }
             else if( clarification == null ) {
@@ -113,20 +158,15 @@ class SupervisorAgent implements NodeAction<AgentContext> {
         
         Don't add any comments in the output or other characters, just use json format.
         """)
-        Router evaluate(@V("intents") String members, @dev.langchain4j.service.UserMessage  String userMessage);
+        Router evaluate(@V("intents") String intents, @dev.langchain4j.service.UserMessage  String userMessage);
     }
 
-    final Service service;
-    public final String[] members = {
-            "BillPayment",
-            "RepeatTransaction",
-            "TransactionHistory",
-            "AccountInfo"
-    };
+    private final Service service;
 
     public static AsyncNodeAction<AgentContext> of( ChatLanguageModel model ) {
         return node_async( new SupervisorAgent(model ));
     }
+
     private SupervisorAgent( ChatLanguageModel model ) {
 
         service = AiServices.create( Service.class, model );
@@ -134,7 +174,7 @@ class SupervisorAgent implements NodeAction<AgentContext> {
 
     @Override
     public Map<String, Object> apply(AgentContext state) {
-        var m = String.join(",", members);
+        var m = String.join(",", Intent.names());
         var message = state.lastMessage().orElseThrow();
         var text = switch( message.type() ) {
             case USER -> ((UserMessage)message).singleText();
@@ -151,3 +191,45 @@ class SupervisorAgent implements NodeAction<AgentContext> {
     }
 }
 
+class EdgeMappings {
+
+    public static class Builder {
+
+        private final Map<String, String> mappings = new HashMap<>();
+
+        public Builder toEND() {
+            mappings.put(END, END);
+            return this;
+        }
+
+        public Builder toEND( String label ) {
+            mappings.put(label, END);
+            return this;
+        }
+
+        public Builder to( String destination ) {
+            mappings.put(destination, destination);
+            return this;
+        }
+
+        public Builder to( String label, String destination ) {
+            mappings.put(label, destination);
+            return this;
+        }
+
+        public Builder to( List<String> destinations ) {
+            destinations.forEach(this::to);
+            return this;
+        }
+
+        public Builder to( String[] destinations ) {
+            return to( Arrays.asList(destinations) );
+        }
+
+        public Map<String, String> build() {
+            return Collections.unmodifiableMap(mappings);
+        }
+    }
+
+    public static Builder builder() { return new Builder(); }
+}
