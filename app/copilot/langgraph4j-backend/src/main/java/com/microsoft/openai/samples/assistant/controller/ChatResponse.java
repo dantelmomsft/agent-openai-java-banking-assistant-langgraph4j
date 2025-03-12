@@ -16,9 +16,9 @@ public record ChatResponse(List<ResponseChoice> choices) {
         String thoughts = "";
         List<String> attachments = Collections.emptyList();
 
-        if(agentContext.get("dataPoints") != null) dataPoints.addAll((List<String>) agentContext.get("dataPoints"));
-        if(agentContext.get("thoughts") != null) thoughts = (String)agentContext.get("thoughts");
-        if(agentContext.get("attachments") != null) attachments.addAll((List<String>) agentContext.get("attachments"));
+//        if(agentContext.get("dataPoints") != null) dataPoints.addAll((List<String>) agentContext.get("dataPoints"));
+//        if(agentContext.get("thoughts") != null) thoughts = (String)agentContext.get("thoughts");
+//        if(agentContext.get("attachments") != null) attachments.addAll((List<String>) agentContext.get("attachments"));
 
 
 

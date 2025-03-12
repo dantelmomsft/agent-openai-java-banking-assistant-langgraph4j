@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 @RestController
 public class ChatController {
 
@@ -51,10 +53,11 @@ public class ChatController {
 
         LOGGER.debug("Processing chat conversation..", chatHistory.getLastMessage().get().getContent());
 
-        var agentContext = new AgentContext();
-        agentContext.put("requestContext", chatRequest.context());
-        agentContext.put("attachments", chatRequest.attachments());
-        agentContext.put("approach", chatRequest.approach());
+
+        var agentContext = new AgentContext( Map.of() );
+//        agentContext.put("requestContext", chatRequest.context());
+//        agentContext.put("attachments", chatRequest.attachments());
+//        agentContext.put("approach", chatRequest.approach());
 
         agentRouter.run(chatHistory,agentContext);
 
