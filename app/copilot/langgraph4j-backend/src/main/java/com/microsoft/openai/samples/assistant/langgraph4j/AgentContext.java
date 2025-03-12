@@ -13,7 +13,15 @@ public class AgentContext extends MessagesState<ChatMessage> {
         super( initData );
     }
 
+    public Optional<String> intent() {
+        return value("intent");
+    }
 
+    public Optional<String> clarification() {
+        return value("clarification");
+    }
+
+    @Deprecated
     public Optional<String> result() {
         return value("result");
     }
