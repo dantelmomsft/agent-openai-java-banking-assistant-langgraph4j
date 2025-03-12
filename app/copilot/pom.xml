@@ -11,6 +11,7 @@
 
     <modules>
         <module>copilot-backend</module>
+        <module>langgraph4j-backend</module>
         <module>semantickernel-openapi-plugin</module>
     </modules>
 
