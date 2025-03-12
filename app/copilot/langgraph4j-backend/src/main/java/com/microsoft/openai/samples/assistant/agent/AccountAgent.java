@@ -136,7 +136,7 @@ public class AccountAgent {
          var message = messages.get(messages.size()-1);
 
          LOGGER.info("======== Account Agent Response: {}",message.getContent());
-         agentContext.setResult(message.getContent());
+         // agentContext.setResult(message.getContent());
 
             }
          }

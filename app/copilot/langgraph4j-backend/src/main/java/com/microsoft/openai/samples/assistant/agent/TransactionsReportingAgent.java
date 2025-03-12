@@ -155,7 +155,7 @@ public class TransactionsReportingAgent {
          //get last message
          var message = messages.get(messages.size()-1);
          LOGGER.info("======== TransactionsHistory Agent Response: {}",message.getContent());
-         agentContext.setResult(message.getContent());
+         // agentContext.setResult(message.getContent());
          }
 
 

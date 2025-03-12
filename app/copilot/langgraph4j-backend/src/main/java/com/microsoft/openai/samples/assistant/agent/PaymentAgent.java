@@ -203,7 +203,7 @@ public class PaymentAgent {
          var message = messages.get(messages.size()-1);
 
          LOGGER.info("======== Payment Agent Response: {}",message.getContent());
-         agentContext.setResult(message.getContent());
+         // agentContext.setResult(message.getContent());
 
             }
 
