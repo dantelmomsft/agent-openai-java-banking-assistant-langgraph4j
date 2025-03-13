@@ -1,8 +1,8 @@
-package com.microsoft.openai.samples.assistant.agent.langgraph4j;
+package com.microsoft.openai.samples.assistant.agent.agent;
 
-import com.microsoft.openai.samples.assistant.langgraph4j.AgentContext;
-import com.microsoft.openai.samples.assistant.langgraph4j.AgentWorkflowBuilder;
-import com.microsoft.openai.samples.assistant.langgraph4j.SupervisorAgent;
+import com.microsoft.openai.samples.assistant.agent.AgentContext;
+import com.microsoft.openai.samples.assistant.agent.AgentWorkflowBuilder;
+import com.microsoft.openai.samples.assistant.agent.SupervisorAgent;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.GraphRepresentation;
 import org.bsc.langgraph4j.RunnableConfig;

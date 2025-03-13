@@ -1,46 +1,17 @@
-// Copyright (c) Microsoft. All rights reserved.
 package com.microsoft.openai.samples.assistant.agent;
 
-import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
-import com.azure.ai.openai.OpenAIAsyncClient;
-import com.microsoft.openai.samples.assistant.agent.cache.ToolExecutionCacheKey;
-import com.microsoft.openai.samples.assistant.agent.cache.ToolExecutionCacheUtils;
-import com.microsoft.openai.samples.assistant.agent.cache.ToolsExecutionCache;
-import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
-import com.microsoft.openai.samples.assistant.langgraph4j.AgentContext;
-import com.microsoft.openai.samples.assistant.plugin.InvoiceScanPlugin;
-import com.microsoft.openai.samples.assistant.plugin.LoggedUserPlugin;
-import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
-import com.microsoft.openai.samples.assistant.security.LoggedUserService;
-import com.microsoft.semantickernel.Kernel;
-import com.microsoft.semantickernel.aiservices.openai.chatcompletion.OpenAIChatCompletion;
-import com.microsoft.semantickernel.hooks.KernelHook;
-import com.microsoft.semantickernel.implementation.EmbeddedResourceLoader;
-import com.microsoft.semantickernel.orchestration.*;
-import com.microsoft.semantickernel.plugin.KernelPlugin;
-import com.microsoft.semantickernel.plugin.KernelPluginFactory;
-import com.microsoft.semantickernel.samples.openapi.SemanticKernelOpenAPIImporter;
-import com.microsoft.semantickernel.services.chatcompletion.AuthorRole;
-import com.microsoft.semantickernel.services.chatcompletion.ChatCompletionService;
-import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import org.bsc.langgraph4j.action.AsyncNodeAction;
+import org.bsc.langgraph4j.action.NodeAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.util.Map;
 
-public class PaymentAgent {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentAgent.class);
-    private OpenAIAsyncClient client;
+import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
-    private Kernel kernel;
-
-    private ChatCompletionService chat;
-
-    private LoggedUserService loggedUserService;
-
-    private ToolsExecutionCache<Object> toolsExecutionCache;
+public class PaymentAgent implements NodeAction<AgentContext> {
+    private static final Logger log = LoggerFactory.getLogger(PaymentAgent.class);
 
     private String PAYMENT_AGENT_SYSTEM_MESSAGE = """
      you are a personal financial advisor who help the user with their recurrent bill payments. The user may want to pay the bill uploading a photo of the bill, or it may start the payment checking transactions history for a specific payee.
@@ -65,151 +36,17 @@ public class PaymentAgent {
      %s
     """;
 
-    public PaymentAgent(OpenAIAsyncClient client, LoggedUserService loggedUserService,ToolsExecutionCache<Object> toolsExecutionCache, String modelId, DocumentIntelligenceClient documentIntelligenceClient, BlobStorageProxy blobStorageProxy, String transactionAPIUrl, String accountAPIUrl, String paymentsAPIUrl) {
-        this.client = client;
-        this.loggedUserService = loggedUserService;
-        this.toolsExecutionCache = toolsExecutionCache;
-        this.chat = OpenAIChatCompletion.builder()
-                .withModelId(modelId)
-                .withOpenAIAsyncClient(client)
-                .build();
 
-        kernel = Kernel.builder()
-                .withAIService(ChatCompletionService.class, chat)
-                .build();
-
-        //var paymentPlugin = KernelPluginFactory.createFromObject(new PaymentMockPlugin(), "PaymentMockPlugin");
-        //var historyPlugin = KernelPluginFactory.createFromObject(new TransactionHistoryMockPlugin(), "TransactionHistoryMockPlugin");
-        var invoiceScanPlugin = KernelPluginFactory.createFromObject(new InvoiceScanPlugin(new DocumentIntelligenceInvoiceScanHelper(documentIntelligenceClient,blobStorageProxy)), "InvoiceScanPlugin");
-
-        String transactionsAPIYaml = null;
-        try {
-            transactionsAPIYaml = EmbeddedResourceLoader.readFile("transaction-history.yaml",
-                    TransactionsReportingAgent.class,
-                    EmbeddedResourceLoader.ResourceLocation.CLASSPATH_ROOT);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Cannot find transaction-history.yaml file in the classpath",e);
-        }
-
-        //Used to retrieve transactions.
-        KernelPlugin openAPIImporterTransactionPlugin = SemanticKernelOpenAPIImporter
-                .builder()
-                .withPluginName("TransactionHistoryPlugin")
-                .withSchema(transactionsAPIYaml)
-                .withServer(transactionAPIUrl)
-                .build();
-
-
-        String accountsAPIYaml = null;
-        try {
-            accountsAPIYaml = EmbeddedResourceLoader.readFile("account.yaml",
-                    TransactionsReportingAgent.class,
-                    EmbeddedResourceLoader.ResourceLocation.CLASSPATH_ROOT);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Cannot find account-history.yaml file in the classpath",e);
-        }
-        //Used to retrieve account id. Transaction API requires account id to retrieve transactions
-        KernelPlugin openAPIImporterAccountPlugin = SemanticKernelOpenAPIImporter
-                .builder()
-                .withPluginName("AccountsPlugin")
-                .withSchema(accountsAPIYaml)
-                .withServer(accountAPIUrl)
-                .build();
-
-        String paymentsAPIYaml = null;
-        try {
-            paymentsAPIYaml = EmbeddedResourceLoader.readFile("payments.yaml",
-                    TransactionsReportingAgent.class,
-                    EmbeddedResourceLoader.ResourceLocation.CLASSPATH_ROOT);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Cannot find account-history.yaml file in the classpath",e);
-        }
-        //Used to submit payments
-        KernelPlugin openAPIImporterPaymentsPlugin = SemanticKernelOpenAPIImporter
-                .builder()
-                .withPluginName("PaymentsPlugin")
-                .withSchema(paymentsAPIYaml)
-                .withServer(paymentsAPIUrl)
-                .build();
-
-        kernel = Kernel.builder()
-                .withAIService(ChatCompletionService.class, chat)
-                .withPlugin(invoiceScanPlugin)
-                .withPlugin(openAPIImporterTransactionPlugin)
-                .withPlugin(openAPIImporterPaymentsPlugin)
-                .withPlugin(openAPIImporterAccountPlugin)
-
-                .build();
-
-       KernelHook.FunctionInvokedHook postExecutionHandler = event -> {
-           //avoid caching scan invoice and submitPayment calls
-           if(event.getFunction().getName().equalsIgnoreCase("scanInvoice") ||
-              event.getFunction().getName().equalsIgnoreCase("submitPayment")
-           )
-               return event;
-
-           LOGGER.debug("Adding {} result to the cache:{}", event.getFunction().getName(),event.getResult().getResult());
-           var toolsExecutionKey = new ToolExecutionCacheKey(loggedUserService.getLoggedUser().username(),null,event.getFunction().getName(), ToolExecutionCacheUtils.convert(event.getArguments()));
-           this.toolsExecutionCache.put(toolsExecutionKey , event.getResult().getResult());
-           return event;
-       };
-
-        kernel.getGlobalKernelHooks().addHook(postExecutionHandler);
+    public static AsyncNodeAction<AgentContext> of(ChatLanguageModel model ) {
+        return node_async( new PaymentAgent(model ));
     }
 
+    private PaymentAgent( ChatLanguageModel model) {
 
-     public void run (ChatHistory userChatHistory, AgentContext agentContext){
-         LOGGER.info("======== Payment Agent: Starting ========");
+    }
 
-         // Extend system prompt with logged user details and current timestamp
-         var userContext = new LoggedUserPlugin(loggedUserService).getUserContext();
-
-         var datetimeIso8601 = ZonedDateTime.now(ZoneId.of("UTC")).toInstant().toString();
-
-
-         /**
-          * Add the function calls cache to the system prompt. This is a global in memory implementation used only for demo purposes.
-          * In production scenario this should be stored globally in an external cache (e.g. Redis) or as scoped conversation context in a database.
-          */
-         var toolsExecutionCacheContent = this.toolsExecutionCache.entries();
-
-
-         String extendedSystemMessage = PAYMENT_AGENT_SYSTEM_MESSAGE.formatted(userContext,datetimeIso8601,ToolExecutionCacheUtils.printWithToolNameAndValues(toolsExecutionCacheContent));
-         var agentChatHistory = new ChatHistory(extendedSystemMessage);
-
-         userChatHistory.forEach( chatMessageContent -> {
-            if(chatMessageContent.getAuthorRole() != AuthorRole.SYSTEM)
-             agentChatHistory.addMessage(chatMessageContent);
-
-         });
-
-         var messages = this.chat.getChatMessageContentsAsync(
-                             agentChatHistory,
-                             kernel,
-                             InvocationContext.builder().withToolCallBehavior(
-                                     ToolCallBehavior.allowAllKernelFunctions(true))
-                             .withReturnMode(InvocationReturnMode.NEW_MESSAGES_ONLY)
-                             .withPromptExecutionSettings(
-                                     PromptExecutionSettings.builder()
-                                             .withTemperature(0.1)
-                                             .withTopP(1)
-                                             .withPresencePenalty(-0)
-                                             .withFrequencyPenalty(-0)
-                                             .build())
-                             .build())
-                     .block();
-
-         //get last message
-         var message = messages.get(messages.size()-1);
-
-         LOGGER.info("======== Payment Agent Response: {}",message.getContent());
-         // agentContext.setResult(message.getContent());
-
-            }
-
-
-         }
-
-
-
-
+    @Override
+    public Map<String, Object> apply(AgentContext agentContext) throws Exception {
+        return Map.of();
+    }
+}

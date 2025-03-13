@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft. All rights reserved.
-package com.microsoft.openai.samples.assistant.langgraph4j;
+package com.microsoft.openai.samples.assistant.agent;
 
 import dev.langchain4j.data.message.ChatMessage;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -19,11 +19,6 @@ public class AgentContext extends MessagesState<ChatMessage> {
 
     public Optional<String> clarification() {
         return value("clarification");
-    }
-
-    @Deprecated
-    public Optional<String> result() {
-        return value("result");
     }
 
 }

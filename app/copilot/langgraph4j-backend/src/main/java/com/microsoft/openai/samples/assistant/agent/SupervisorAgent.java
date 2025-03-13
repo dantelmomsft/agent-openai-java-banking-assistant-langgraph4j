@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.langgraph4j;
+package com.microsoft.openai.samples.assistant.agent;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;

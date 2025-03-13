@@ -4,7 +4,7 @@ package com.microsoft.openai.samples.assistant.controller;
 import com.microsoft.openai.samples.assistant.agent.*;
 
 
-import com.microsoft.openai.samples.assistant.langgraph4j.AgentContext;
+import com.microsoft.openai.samples.assistant.agent.AgentContext;
 import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 
 import org.slf4j.Logger;
@@ -24,10 +24,9 @@ import java.util.Map;
 public class ChatController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
-    private final RouterAgent agentRouter;
 
-    public ChatController(RouterAgent agentRouter){
-        this.agentRouter = agentRouter;
+    public ChatController(){
+
     }
 
 
@@ -51,15 +50,9 @@ public class ChatController {
         ChatHistory chatHistory = convertSKChatHistory(chatRequest);
 
 
-        LOGGER.debug("Processing chat conversation..", chatHistory.getLastMessage().get().getContent());
-
+        LOGGER.debug("Processing chat conversation.. {}", chatHistory.getLastMessage().get().getContent());
 
         var agentContext = new AgentContext( Map.of() );
-//        agentContext.put("requestContext", chatRequest.context());
-//        agentContext.put("attachments", chatRequest.attachments());
-//        agentContext.put("approach", chatRequest.approach());
-
-        agentRouter.run(chatHistory,agentContext);
 
         return ResponseEntity.ok(
                 ChatResponse.buildChatResponse(chatHistory, agentContext));
@@ -76,9 +69,8 @@ public class ChatController {
                          chatHistory.addUserMessage(historyChat.content() + " " + historyChat.attachments().toString());
                    }
                    if("assistant".equals(historyChat.role()))
-                   chatHistory.addAssistantMessage(historyChat.content());
+                        chatHistory.addAssistantMessage(historyChat.content());
                });
-       //-chatHistory.addUserMessage(lastUserMessage.getContent());
 
        return chatHistory;
 

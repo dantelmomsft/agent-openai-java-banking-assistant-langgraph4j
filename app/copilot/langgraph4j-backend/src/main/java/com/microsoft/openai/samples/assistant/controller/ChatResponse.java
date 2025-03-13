@@ -2,7 +2,7 @@
 package com.microsoft.openai.samples.assistant.controller;
 
 
-import com.microsoft.openai.samples.assistant.langgraph4j.AgentContext;
+import com.microsoft.openai.samples.assistant.agent.AgentContext;
 import com.microsoft.openai.samples.assistant.common.ChatGPTMessage;
 import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 
