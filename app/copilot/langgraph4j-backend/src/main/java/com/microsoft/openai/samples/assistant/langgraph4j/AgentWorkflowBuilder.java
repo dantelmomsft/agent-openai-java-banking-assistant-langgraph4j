@@ -1,32 +1,20 @@
 package com.microsoft.openai.samples.assistant.langgraph4j;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.ollama.OllamaChatModel;
-import dev.langchain4j.model.output.structured.Description;
-import dev.langchain4j.service.AiServices;
-import dev.langchain4j.service.SystemMessage;
-import dev.langchain4j.service.V;
 import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
-import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.EdgeAction;
-import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.langchain4j.serializer.std.ChatMesssageSerializer;
 import org.bsc.langgraph4j.langchain4j.serializer.std.ToolExecutionRequestSerializer;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.bsc.langgraph4j.StateGraph.END;
@@ -39,7 +27,7 @@ public class AgentWorkflowBuilder {
 
     private final EdgeAction<AgentContext> superVisorRoute =  (state ) ->
         state.intent().orElseGet( () ->
-                state.clarification().map( c -> SupervisorAgent.Clarification ).orElse(END) )
+                state.clarification().map( c -> SupervisorAgent.UserProxy).orElse(END) )
      ;
 
     public CompiledGraph<AgentContext> build() throws GraphStateException {
@@ -57,7 +45,7 @@ public class AgentWorkflowBuilder {
 
         var graph = new StateGraph<>( AgentContext.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgent.of(modelThinking) )
-                .addNode( SupervisorAgent.Clarification, node_async( state -> Map.of() ) )
+                .addNode( SupervisorAgent.UserProxy, node_async(state -> Map.of() ) )
                 .addNode( SupervisorAgent.Intent.AccountInfo.name(), node_async( state -> Map.of() ) )
                 .addNode( SupervisorAgent.Intent.BillPayment.name(), node_async( state -> Map.of() ) )
                 .addNode( SupervisorAgent.Intent.TransactionHistory.name(), node_async( state -> Map.of() ) )
@@ -67,21 +55,21 @@ public class AgentWorkflowBuilder {
                         edge_async(superVisorRoute),
                         EdgeMappings.builder()
                                 .to( SupervisorAgent.Intent.names() )
-                                .to( SupervisorAgent.Clarification )
+                                .to( SupervisorAgent.UserProxy)
                                 .toEND()
                                 .build())
-                .addEdge( SupervisorAgent.Clarification, "Supervisor" )
-                .addEdge( SupervisorAgent.Intent.AccountInfo.name(), END )
-                .addEdge( SupervisorAgent.Intent.BillPayment.name(), END )
-                .addEdge( SupervisorAgent.Intent.TransactionHistory.name(), END  )
-                .addEdge( SupervisorAgent.Intent.RepeatTransaction.name(), END )
+                .addEdge( SupervisorAgent.UserProxy, "Supervisor" )
+                .addEdge( SupervisorAgent.Intent.AccountInfo.name(), "Supervisor" )
+                .addEdge( SupervisorAgent.Intent.BillPayment.name(), "Supervisor" )
+                .addEdge( SupervisorAgent.Intent.TransactionHistory.name(), "Supervisor"  )
+                .addEdge( SupervisorAgent.Intent.RepeatTransaction.name(), "Supervisor" )
                 ;
 
         var checkPointSaver = new MemorySaver();
 
         var config = CompileConfig.builder()
                         .checkpointSaver( checkPointSaver )
-                        .interruptBefore( SupervisorAgent.Clarification )
+                        .interruptBefore( SupervisorAgent.UserProxy)
                         .build();
 
         return graph.compile(config);
