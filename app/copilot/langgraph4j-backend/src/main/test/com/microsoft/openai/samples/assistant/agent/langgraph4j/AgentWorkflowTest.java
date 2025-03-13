@@ -2,7 +2,9 @@ package com.microsoft.openai.samples.assistant.agent.langgraph4j;
 
 import com.microsoft.openai.samples.assistant.langgraph4j.AgentContext;
 import com.microsoft.openai.samples.assistant.langgraph4j.AgentWorkflowBuilder;
+import com.microsoft.openai.samples.assistant.langgraph4j.SupervisorAgent;
 import dev.langchain4j.data.message.UserMessage;
+import org.bsc.langgraph4j.GraphRepresentation;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -15,6 +17,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class AgentWorkflowTest {
     private static final Logger log = LoggerFactory.getLogger("Tests");
+
+    @Test
+    public void generateGraphRepresentation() throws Exception {
+        var workflow = new AgentWorkflowBuilder().build();
+
+        var result = workflow.getGraph( GraphRepresentation.Type.MERMAID, "Banking Assistant", false);
+
+        System.out.println( result.content() );
+
+    }
+
     @Test
     public void testWorkflow01() throws Exception {
 
@@ -47,8 +60,9 @@ public class AgentWorkflowTest {
 
         log.info( "\nClarification requested:\n'{}'",  state.flatMap(AgentContext::clarification).orElseThrow());
 
+
         var snapshot = workflow.getState(runnableConfig);
-        assertEquals( "Clarification", snapshot.next() );
+        assertEquals(SupervisorAgent.UserProxy, snapshot.next() );
 
         var partialState = new HashMap<String,Object>() {{
             put( "messages", UserMessage.from("i need the infos from my account") );
