@@ -87,6 +87,8 @@ public class SupervisorAgent implements NodeAction<AgentContext> {
          * @return A {@link Map} containing either "intent" or "clarification" based on the current state, if any. If neither is available, throws an {@link IllegalStateException}.
          */
         public Map<String,Object> toMap() {
+            return Map.of( "intent", intent, "clarification", clarification );
+            /*
             if(UserProxy.equalsIgnoreCase(intent) ) {
                 return Map.of("clarification", clarification );
             }
@@ -95,6 +97,7 @@ public class SupervisorAgent implements NodeAction<AgentContext> {
             }
 
             throw new IllegalStateException("SupervisorAgent could not infer either 'intent' or 'clarification'!");
+            */
         }
     }
 
