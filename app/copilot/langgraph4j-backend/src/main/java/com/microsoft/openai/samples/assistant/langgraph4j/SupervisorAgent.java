@@ -28,7 +28,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 public class SupervisorAgent implements NodeAction<AgentContext> {
     private static final Logger log = LoggerFactory.getLogger(SupervisorAgent.class);
 
-    public static String Clarification = "Clarification";
+    public static String UserProxy = "User";
 
     public enum Intent {
         BillPayment,
@@ -60,7 +60,7 @@ public class SupervisorAgent implements NodeAction<AgentContext> {
      */
     static class Router {
         // @Description("Intent to route to next. If no intent are identified route to FINISH.")
-        @Description("Intent to route to next. If no intent are identified route to Clarification.")
+        @Description("Intent to route to next. If no intent are identified route to User.")
         String intent   ;
 
         //@Description("If you don't understand or if an intent is not identified be polite with the user, ask clarifying question also using the list of the available intents.")
@@ -87,7 +87,7 @@ public class SupervisorAgent implements NodeAction<AgentContext> {
          * @return A {@link Map} containing either "intent" or "clarification" based on the current state, if any. If neither is available, throws an {@link IllegalStateException}.
          */
         public Map<String,Object> toMap() {
-            if(Clarification.equalsIgnoreCase(intent) ) {
+            if(UserProxy.equalsIgnoreCase(intent) ) {
                 return Map.of("clarification", clarification );
             }
             else if( clarification == null ) {
