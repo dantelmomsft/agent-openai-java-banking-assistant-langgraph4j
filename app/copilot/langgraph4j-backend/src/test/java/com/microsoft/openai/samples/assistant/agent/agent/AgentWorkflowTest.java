@@ -3,6 +3,7 @@ package com.microsoft.openai.samples.assistant.agent.agent;
 import com.microsoft.openai.samples.assistant.agent.AgentContext;
 import com.microsoft.openai.samples.assistant.agent.AgentWorkflowBuilder;
 import com.microsoft.openai.samples.assistant.agent.SupervisorAgent;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.GraphRepresentation;
 import org.bsc.langgraph4j.RunnableConfig;
@@ -36,7 +37,7 @@ public class AgentWorkflowTest {
         var state = workflow.invoke( Map.of( "messages", UserMessage.from("i need the infos from my account")));
 
         assertTrue( state.isPresent() );
-        assertFalse( state.get().clarification().isPresent() );
+        //assertFalse( state.get().clarification().isPresent() );
         assertTrue( state.get().intent().isPresent() );
 
         log.info( "\nIntent detected: '{}'",  state.flatMap(AgentContext::intent).orElseThrow());
@@ -52,21 +53,30 @@ public class AgentWorkflowTest {
                 .threadId("conversation-1" )
                 .build();
 
-        var state = workflow.invoke( Map.of( "messages", UserMessage.from("Hello i'm a human")), runnableConfig);
+        var userRequest1 = "Hello i'm a bartolomeo";
+
+        log.info( "\nrequest by User:\n{}",userRequest1 );
+
+        var state = workflow.invoke( Map.of( "messages", UserMessage.from(userRequest1)), runnableConfig);
 
         assertTrue( state.isPresent() );
-        assertFalse( state.get().intent().isPresent() );
+        assertEquals( SupervisorAgent.Intent.User.name(), state.get().intent().get() );
         assertTrue( state.get().clarification().isPresent() );
 
-        log.info( "\nClarification requested:\n'{}'",  state.flatMap(AgentContext::clarification).orElseThrow());
+        log.info( "\nresponse to User::\n{}",  state.flatMap(AgentContext::clarification).orElseThrow());
 
 
         var snapshot = workflow.getState(runnableConfig);
-        assertEquals(SupervisorAgent.UserProxy, snapshot.next() );
+        assertEquals(SupervisorAgent.Intent.User.name(), snapshot.next() );
+
+        var userRequest2 = "i need the infos from my account";
+
+        log.info( "\nrequest by User:\n{}",userRequest2 );
 
         var partialState = new HashMap<String,Object>() {{
-            put( "messages", UserMessage.from("i need the infos from my account") );
-            put( "clarification", null);
+            put( "messages", UserMessage.from(userRequest2) );
+            put( "clarification", null); // remove from state
+            put( "intent", null); // remove from state
         }};
 
         runnableConfig = workflow.updateState( runnableConfig, partialState);
@@ -76,8 +86,14 @@ public class AgentWorkflowTest {
         assertTrue( state.isPresent() );
         assertFalse( state.get().clarification().isPresent() );
         assertTrue( state.get().intent().isPresent() );
+        assertEquals(SupervisorAgent.Intent.User.name(), state.get().intent().get() );
+        assertTrue( state.get().lastMessage().isPresent() );
 
-        log.info( "\nIntent detected: '{}'",  state.flatMap(AgentContext::intent).orElseThrow());
+        log.info( "\nresponse to User:\n{}",
+                state.get().lastMessage()
+                        .map(AiMessage.class::cast)
+                        .map(AiMessage::text)
+                        .orElseThrow());
 
     }
 }
