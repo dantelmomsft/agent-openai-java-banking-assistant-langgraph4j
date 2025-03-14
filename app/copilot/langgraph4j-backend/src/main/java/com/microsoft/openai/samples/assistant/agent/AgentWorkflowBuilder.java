@@ -27,8 +27,7 @@ public class AgentWorkflowBuilder {
 
     private final EdgeAction<AgentContext> superVisorRoute =  (state ) ->
         state.intent().orElseGet( () ->
-                state.clarification().map( c -> SupervisorAgent.UserProxy).orElse(END) )
-     ;
+                state.clarification().map( c -> SupervisorAgent.Intent.User.name()).orElse(END) );
 
     private final AsyncNodeAction<AgentContext> userProxy = node_async( state -> Map.of()  );
 
@@ -47,7 +46,7 @@ public class AgentWorkflowBuilder {
 
         var graph = new StateGraph<>( AgentContext.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgent.of(modelThinking) )
-                .addNode( SupervisorAgent.UserProxy, userProxy )
+                .addNode( SupervisorAgent.Intent.User.name(), userProxy )
                 .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking ) )
                 .addNode( SupervisorAgent.Intent.BillPayment.name(), PaymentAgent.of( modelThinking ) )
                 .addNode( SupervisorAgent.Intent.TransactionHistory.name(), TransactionsReportingAgent.of( modelThinking ))
@@ -57,10 +56,9 @@ public class AgentWorkflowBuilder {
                         edge_async(superVisorRoute),
                         EdgeMappings.builder()
                                 .to( SupervisorAgent.Intent.names() )
-                                .to( SupervisorAgent.UserProxy )
                                 //.toEND()
                                 .build())
-                .addEdge( SupervisorAgent.UserProxy, "Supervisor" )
+                .addEdge( SupervisorAgent.Intent.User.name(), "Supervisor" )
                 .addEdge( SupervisorAgent.Intent.AccountInfo.name(), "Supervisor" )
                 .addEdge( SupervisorAgent.Intent.BillPayment.name(), "Supervisor" )
                 .addEdge( SupervisorAgent.Intent.TransactionHistory.name(), "Supervisor"  )
@@ -71,7 +69,7 @@ public class AgentWorkflowBuilder {
 
         var config = CompileConfig.builder()
                         .checkpointSaver( checkPointSaver )
-                        .interruptBefore( SupervisorAgent.UserProxy)
+                        .interruptBefore( SupervisorAgent.Intent.User.name())
                         .build();
 
         return graph.compile(config);
