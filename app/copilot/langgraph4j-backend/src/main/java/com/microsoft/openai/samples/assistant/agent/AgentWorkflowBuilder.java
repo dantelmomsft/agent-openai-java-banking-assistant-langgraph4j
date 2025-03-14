@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
+import org.bsc.langgraph4j.action.AsyncEdgeAction;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
@@ -25,12 +26,6 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public class AgentWorkflowBuilder {
 
-    private final EdgeAction<AgentContext> superVisorRoute =  (state ) ->
-        state.intent().orElseGet( () ->
-                state.clarification().map( c -> SupervisorAgent.Intent.User.name()).orElse(END) );
-
-    private final AsyncNodeAction<AgentContext> userProxy = node_async( state -> Map.of()  );
-
     public CompiledGraph<AgentContext> build() throws GraphStateException {
 
         final var modelThinking = OllamaChatModel.builder()
@@ -44,16 +39,24 @@ public class AgentWorkflowBuilder {
 
         var serializer = new StateSerializer();
 
+        AsyncNodeAction<AgentContext> transactionAgent = TransactionsReportingAgent.of( modelThinking );
+
+        AsyncNodeAction<AgentContext> userProxy = node_async( state -> Map.of()  );
+
+        AsyncEdgeAction<AgentContext> superVisorRoute =  edge_async(( state ) ->
+                state.intent().orElseGet( () ->
+                        state.clarification().map( c -> SupervisorAgent.Intent.User.name()).orElse(END) ));
+
         var graph = new StateGraph<>( AgentContext.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgent.of(modelThinking) )
                 .addNode( SupervisorAgent.Intent.User.name(), userProxy )
                 .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking ) )
                 .addNode( SupervisorAgent.Intent.BillPayment.name(), PaymentAgent.of( modelThinking ) )
-                .addNode( SupervisorAgent.Intent.TransactionHistory.name(), TransactionsReportingAgent.of( modelThinking ))
-                .addNode( SupervisorAgent.Intent.RepeatTransaction.name(), node_async( state -> Map.of() ) )
+                .addNode( SupervisorAgent.Intent.TransactionHistory.name(), transactionAgent)
+                .addNode( SupervisorAgent.Intent.RepeatTransaction.name(), transactionAgent )
                 .addEdge(  START, "Supervisor" )
                 .addConditionalEdges( "Supervisor",
-                        edge_async(superVisorRoute),
+                        superVisorRoute,
                         EdgeMappings.builder()
                                 .to( SupervisorAgent.Intent.names() )
                                 //.toEND()
