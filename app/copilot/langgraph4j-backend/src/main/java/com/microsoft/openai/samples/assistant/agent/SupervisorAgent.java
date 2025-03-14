@@ -6,6 +6,7 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.output.structured.Description;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.V;
 import org.bsc.langgraph4j.RunnableConfig;
@@ -120,11 +121,10 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
         
         Don't add any comments in the output or other characters, just use json format.
         """)
-        Result evaluate(@V("intents") String intents, @dev.langchain4j.service.UserMessage  String userMessage);
+        Result evaluate(@MemoryId String memoryId, @V("intents") String intents, @dev.langchain4j.service.UserMessage  String userMessage);
     }
 
-    final ChatLanguageModel model;
-    private Service service;
+    private final Service service;
 
     /**
      * Creates an {@code AsyncNodeAction} with a new {@code SupervisorAgent}.
@@ -142,22 +142,13 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
      * @param model the {@link ChatLanguageModel} to be used by this agent.
      */
     private SupervisorAgent( ChatLanguageModel model ) {
-        this.model = model;
+
+        service = AiServices.builder( Service.class )
+                .chatLanguageModel( model )
+                .chatMemoryProvider( (memoryId) -> MessageWindowChatMemory.withMaxMessages(10) )
+                .build();
     }
 
-    private Service service( AgentContext state, RunnableConfig config ) {
-        if( service==null ) {
-            service = config.threadId()
-                    .map( threadId ->
-                            AiServices.builder( Service.class )
-                                .chatLanguageModel( model )
-                                .chatMemory( MessageWindowChatMemory.withMaxMessages(10) )
-                                .build())
-                    .orElseGet( () -> AiServices.create( Service.class, model));
-
-        }
-        return service;
-    }
     /**
      * Applies the given agent context to determine a route.
      * 
@@ -179,7 +170,9 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
             default -> throw new IllegalStateException("unexpected message type: " + message.type() );
         };
 
-        var result = service( state, config ).evaluate( m, text );
+        var threadId = config.threadId().orElse("default");
+
+        var result = service.evaluate( threadId, m, text );
 
         log.debug( "supervisor result {}", result);
 
