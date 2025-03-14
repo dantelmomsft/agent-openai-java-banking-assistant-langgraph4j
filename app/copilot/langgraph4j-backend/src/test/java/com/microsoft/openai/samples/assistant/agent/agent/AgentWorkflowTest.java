@@ -34,13 +34,22 @@ public class AgentWorkflowTest {
 
         var workflow = new AgentWorkflowBuilder().build();
 
-        var state = workflow.invoke( Map.of( "messages", UserMessage.from("i need the infos from my account")));
+        var userRequest = "i need the infos from my account";
+
+        log.info( "\nrequest by User:\n{}", userRequest );
+
+        var state = workflow.invoke( Map.of( "messages", UserMessage.from( userRequest ) ));
 
         assertTrue( state.isPresent() );
         //assertFalse( state.get().clarification().isPresent() );
         assertTrue( state.get().intent().isPresent() );
+        assertTrue( state.get().lastMessage().isPresent() );
 
-        log.info( "\nIntent detected: '{}'",  state.flatMap(AgentContext::intent).orElseThrow());
+        log.info( "\nresponse to User:\n{}",
+                state.get().lastMessage()
+                        .map(AiMessage.class::cast)
+                        .map(AiMessage::text)
+                        .orElseThrow());
 
     }
 
