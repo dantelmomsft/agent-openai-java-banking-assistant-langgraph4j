@@ -1,5 +1,6 @@
 package com.microsoft.openai.samples.assistant.agent;
 
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.NodeAction;
@@ -34,6 +35,9 @@ public  class AccountAgent implements NodeAction<AgentContext> {
 
     @Override
     public Map<String, Object> apply(AgentContext agentContext) throws Exception {
-        return Map.of();
+        return Map.of( "messages",
+                AiMessage.from("Account info: name = 'bartolomeo'."), // result from reasoning
+                "intent", SupervisorAgent.Intent.User.name() // force intent
+        );
     }
 }
