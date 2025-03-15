@@ -2,8 +2,6 @@ package com.microsoft.openai.samples.assistant.agent;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import org.bsc.langgraph4j.CompileConfig;
@@ -12,7 +10,6 @@ import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncEdgeAction;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
-import org.bsc.langgraph4j.action.EdgeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.langchain4j.serializer.std.ChatMesssageSerializer;
 import org.bsc.langgraph4j.langchain4j.serializer.std.ToolExecutionRequestSerializer;
@@ -28,7 +25,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public class AgentWorkflowBuilder {
 
-    public CompiledGraph<AgentContext> build() throws GraphStateException {
+    public CompiledGraph<AgentWorkflowState> build() throws GraphStateException {
 
         final var modelThinking = OllamaChatModel.builder()
                 .baseUrl( "http://localhost:11434" )
@@ -44,15 +41,15 @@ public class AgentWorkflowBuilder {
 
         var serializer = new StateSerializer(memory);
 
-        AsyncNodeAction<AgentContext> transactionAgent = TransactionsReportingAgent.of( modelThinking );
+        AsyncNodeAction<AgentWorkflowState> transactionAgent = TransactionsReportingAgent.of( modelThinking );
 
-        AsyncNodeAction<AgentContext> userProxy = node_async( state -> Map.of()  );
+        AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state -> Map.of()  );
 
-        AsyncEdgeAction<AgentContext> superVisorRoute =  edge_async(( state ) ->
+        AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) ->
                 state.intent().orElseGet( () ->
                         state.clarification().map( c -> SupervisorAgent.Intent.User.name()).orElse(END) ));
 
-        var graph = new StateGraph<>( AgentContext.SCHEMA, serializer )
+        var graph = new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgent.of(modelThinking, memory) )
                 .addNode( SupervisorAgent.Intent.User.name(), userProxy )
                 .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking ) )
@@ -85,11 +82,11 @@ public class AgentWorkflowBuilder {
 }
 
 
-class StateSerializer extends ObjectStreamStateSerializer<AgentContext> {
+class StateSerializer extends ObjectStreamStateSerializer<AgentWorkflowState> {
 
     public StateSerializer( AgentMemory memory ) {
         super( (initialValue ) -> {
-            var result = new AgentContext( initialValue );
+            var result = new AgentWorkflowState( initialValue );
             memory.setState( result );
             return result;
         });

@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
-public  class AccountAgent implements NodeAction<AgentContext> {
+public  class AccountAgent implements NodeAction<AgentWorkflowState> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountAgent.class);
 
@@ -25,7 +25,7 @@ public  class AccountAgent implements NodeAction<AgentContext> {
          %s
         """;
 
-    public static AsyncNodeAction<AgentContext> of(ChatLanguageModel model ) {
+    public static AsyncNodeAction<AgentWorkflowState> of(ChatLanguageModel model ) {
         return node_async( new AccountAgent(model ));
     }
 
@@ -34,7 +34,7 @@ public  class AccountAgent implements NodeAction<AgentContext> {
     }
 
     @Override
-    public Map<String, Object> apply(AgentContext agentContext) throws Exception {
+    public Map<String, Object> apply(AgentWorkflowState agentContext) throws Exception {
         return Map.of( "messages",
                 AiMessage.from("Account info: name = 'bartolomeo'."), // result from reasoning
                 "intent", SupervisorAgent.Intent.User.name() // force intent

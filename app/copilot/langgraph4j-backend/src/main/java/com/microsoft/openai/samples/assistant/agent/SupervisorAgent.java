@@ -3,7 +3,6 @@ package com.microsoft.openai.samples.assistant.agent;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.output.structured.Description;
 import dev.langchain4j.service.AiServices;
@@ -29,7 +28,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
  * The class provides functionality to evaluate user messages and determine the appropriate action based on pre-defined
  * intent patterns.
  */
-public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
+public class SupervisorAgent implements NodeActionWithConfig<AgentWorkflowState> {
     private static final Logger log = LoggerFactory.getLogger(SupervisorAgent.class);
 
     public enum Intent {
@@ -133,7 +132,7 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
      * @param model the chat language model to use
      * @return the created {@code AsyncNodeAction}
      */
-    public static AsyncNodeActionWithConfig<AgentContext> of(ChatLanguageModel model, ChatMemory memory) {
+    public static AsyncNodeActionWithConfig<AgentWorkflowState> of(ChatLanguageModel model, ChatMemory memory) {
         return node_async( new SupervisorAgent(model,memory) );
     }
 
@@ -157,7 +156,7 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
      * @return A map representing the calculated route.
      */
     @Override
-    public Map<String, Object> apply(AgentContext state, RunnableConfig config) {
+    public Map<String, Object> apply(AgentWorkflowState state, RunnableConfig config) {
 
         if( state.intent().isPresent() && state.intent().get().equals(Intent.User.name())) {
             return Map.of();

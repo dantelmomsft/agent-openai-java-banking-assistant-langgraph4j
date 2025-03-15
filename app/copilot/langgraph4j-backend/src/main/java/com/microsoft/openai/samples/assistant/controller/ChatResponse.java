@@ -2,7 +2,7 @@
 package com.microsoft.openai.samples.assistant.controller;
 
 
-import com.microsoft.openai.samples.assistant.agent.AgentContext;
+import com.microsoft.openai.samples.assistant.agent.AgentWorkflowState;
 import com.microsoft.openai.samples.assistant.common.ChatGPTMessage;
 import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 
@@ -11,7 +11,7 @@ import java.util.List;
 
 public record ChatResponse(List<ResponseChoice> choices) {
 
-    public static ChatResponse buildChatResponse(ChatHistory chatHistory, AgentContext agentContext) {
+    public static ChatResponse buildChatResponse(ChatHistory chatHistory, AgentWorkflowState agentContext) {
         List<String> dataPoints = Collections.emptyList();
         String thoughts = "";
         List<String> attachments = Collections.emptyList();

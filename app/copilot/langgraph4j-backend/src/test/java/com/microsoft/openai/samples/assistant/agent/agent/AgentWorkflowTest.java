@@ -1,6 +1,6 @@
 package com.microsoft.openai.samples.assistant.agent.agent;
 
-import com.microsoft.openai.samples.assistant.agent.AgentContext;
+import com.microsoft.openai.samples.assistant.agent.AgentWorkflowState;
 import com.microsoft.openai.samples.assistant.agent.AgentWorkflowBuilder;
 import com.microsoft.openai.samples.assistant.agent.SupervisorAgent;
 import dev.langchain4j.data.message.AiMessage;
@@ -72,7 +72,7 @@ public class AgentWorkflowTest {
         assertEquals( SupervisorAgent.Intent.User.name(), state.get().intent().get() );
         assertTrue( state.get().clarification().isPresent() );
 
-        log.info( "\nresponse to User::\n{}",  state.flatMap(AgentContext::clarification).orElseThrow());
+        log.info( "\nresponse to User::\n{}",  state.flatMap(AgentWorkflowState::clarification).orElseThrow());
 
 
         var snapshot = workflow.getState(runnableConfig);

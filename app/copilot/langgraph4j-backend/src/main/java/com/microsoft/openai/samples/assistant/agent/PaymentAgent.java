@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
-public class PaymentAgent implements NodeAction<AgentContext> {
+public class PaymentAgent implements NodeAction<AgentWorkflowState> {
     private static final Logger log = LoggerFactory.getLogger(PaymentAgent.class);
 
     private String PAYMENT_AGENT_SYSTEM_MESSAGE = """
@@ -37,7 +37,7 @@ public class PaymentAgent implements NodeAction<AgentContext> {
     """;
 
 
-    public static AsyncNodeAction<AgentContext> of(ChatLanguageModel model ) {
+    public static AsyncNodeAction<AgentWorkflowState> of(ChatLanguageModel model ) {
         return node_async( new PaymentAgent(model ));
     }
 
@@ -46,7 +46,7 @@ public class PaymentAgent implements NodeAction<AgentContext> {
     }
 
     @Override
-    public Map<String, Object> apply(AgentContext agentContext) throws Exception {
+    public Map<String, Object> apply(AgentWorkflowState agentContext) throws Exception {
         return Map.of();
     }
 }

@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 package com.microsoft.openai.samples.assistant.controller;
 
-import com.microsoft.openai.samples.assistant.agent.*;
 
-
-import com.microsoft.openai.samples.assistant.agent.AgentContext;
+import com.microsoft.openai.samples.assistant.agent.AgentWorkflowState;
 import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 
 import org.slf4j.Logger;
@@ -52,7 +50,7 @@ public class ChatController {
 
         LOGGER.debug("Processing chat conversation.. {}", chatHistory.getLastMessage().get().getContent());
 
-        var agentContext = new AgentContext( Map.of() );
+        var agentContext = new AgentWorkflowState( Map.of() );
 
         return ResponseEntity.ok(
                 ChatResponse.buildChatResponse(chatHistory, agentContext));

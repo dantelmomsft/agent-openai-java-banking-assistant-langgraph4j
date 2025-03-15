@@ -12,12 +12,12 @@ import java.util.Objects;
 
 public class AgentMemory implements ChatMemory {
 
-    private AgentContext state;
+    private AgentWorkflowState state;
 
     public AgentMemory() {
     }
 
-    void setState( AgentContext state ) {
+    void setState( AgentWorkflowState state ) {
         this.state = state ;
     }
 
@@ -40,12 +40,12 @@ public class AgentMemory implements ChatMemory {
                 // Replace System Message in memory
                 AgentState.updateState(state,
                         Map.of("memory", List.of(RemoveByHash.of(prevSystemMessage.get()), message)),
-                        AgentContext.SCHEMA);
+                        AgentWorkflowState.SCHEMA);
                 return;
             }
         }
         // Add System Message in memory
-        AgentState.updateState( state, Map.of( "memory", message ), AgentContext.SCHEMA );
+        AgentState.updateState( state, Map.of( "memory", message ), AgentWorkflowState.SCHEMA );
 
     }
 
