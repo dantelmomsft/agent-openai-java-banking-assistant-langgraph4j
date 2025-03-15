@@ -1,5 +1,6 @@
 package com.microsoft.openai.samples.assistant.agent;
 
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.NodeAction;
@@ -37,11 +38,11 @@ public class PaymentAgent implements NodeAction<AgentWorkflowState> {
     """;
 
 
-    public static AsyncNodeAction<AgentWorkflowState> of(ChatLanguageModel model ) {
-        return node_async( new PaymentAgent(model ));
+    public static AsyncNodeAction<AgentWorkflowState> of(ChatLanguageModel model, ChatMemory memory ) {
+        return node_async( new PaymentAgent(model, memory ));
     }
 
-    private PaymentAgent( ChatLanguageModel model) {
+    private PaymentAgent( ChatLanguageModel model, ChatMemory memory) {
 
     }
 
