@@ -25,7 +25,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public class AgentWorkflowBuilder {
 
-    public CompiledGraph<AgentWorkflowState> build() throws GraphStateException {
+    public StateGraph<AgentWorkflowState> stateGraph() throws GraphStateException {
 
         final var modelThinking = OllamaChatModel.builder()
                 .baseUrl( "http://localhost:11434" )
@@ -49,7 +49,7 @@ public class AgentWorkflowBuilder {
                 state.intent().orElseGet( () ->
                         state.clarification().map( c -> SupervisorAgent.Intent.User.name()).orElse(END) ));
 
-        var graph = new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
+        return new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgent.of(modelThinking, memory) )
                 .addNode( SupervisorAgent.Intent.User.name(), userProxy )
                 .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking, memory ) )
@@ -69,6 +69,11 @@ public class AgentWorkflowBuilder {
                 .addEdge( SupervisorAgent.Intent.TransactionHistory.name(), "Supervisor"  )
                 .addEdge( SupervisorAgent.Intent.RepeatTransaction.name(), "Supervisor" )
                 ;
+    }
+
+    public CompiledGraph<AgentWorkflowState> build() throws GraphStateException {
+
+        var graph = stateGraph();
 
         var checkPointSaver = new MemorySaver();
 

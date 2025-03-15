@@ -1,8 +1,5 @@
-package com.microsoft.openai.samples.assistant.agent.agent;
+package com.microsoft.openai.samples.assistant.agent;
 
-import com.microsoft.openai.samples.assistant.agent.AgentWorkflowState;
-import com.microsoft.openai.samples.assistant.agent.AgentWorkflowBuilder;
-import com.microsoft.openai.samples.assistant.agent.SupervisorAgent;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.GraphRepresentation;
