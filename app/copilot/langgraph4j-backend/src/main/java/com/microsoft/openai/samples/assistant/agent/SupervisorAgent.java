@@ -2,6 +2,7 @@ package com.microsoft.openai.samples.assistant.agent;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.output.structured.Description;
@@ -132,8 +133,8 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
      * @param model the chat language model to use
      * @return the created {@code AsyncNodeAction}
      */
-    public static AsyncNodeActionWithConfig<AgentContext> of(ChatLanguageModel model ) {
-        return node_async( new SupervisorAgent(model) );
+    public static AsyncNodeActionWithConfig<AgentContext> of(ChatLanguageModel model, ChatMemory memory) {
+        return node_async( new SupervisorAgent(model,memory) );
     }
 
     /**
@@ -141,11 +142,11 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentContext> {
      *
      * @param model the {@link ChatLanguageModel} to be used by this agent.
      */
-    private SupervisorAgent( ChatLanguageModel model ) {
+    private SupervisorAgent( ChatLanguageModel model, ChatMemory memory ) {
 
         service = AiServices.builder( Service.class )
                 .chatLanguageModel( model )
-                .chatMemoryProvider( (memoryId) -> MessageWindowChatMemory.withMaxMessages(10) )
+                .chatMemoryProvider ( id -> memory )
                 .build();
     }
 

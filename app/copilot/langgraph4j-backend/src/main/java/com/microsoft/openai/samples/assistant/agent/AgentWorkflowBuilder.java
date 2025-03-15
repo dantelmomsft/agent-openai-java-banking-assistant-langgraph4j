@@ -2,6 +2,8 @@ package com.microsoft.openai.samples.assistant.agent;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import org.bsc.langgraph4j.CompileConfig;
@@ -37,7 +39,10 @@ public class AgentWorkflowBuilder {
                 .modelName("deepseek-r1:14b")
                 .build();
 
-        var serializer = new StateSerializer();
+        // var  memory = MessageWindowChatMemory.withMaxMessages(10);
+        var memory = new AgentMemory();
+
+        var serializer = new StateSerializer(memory);
 
         AsyncNodeAction<AgentContext> transactionAgent = TransactionsReportingAgent.of( modelThinking );
 
@@ -48,7 +53,7 @@ public class AgentWorkflowBuilder {
                         state.clarification().map( c -> SupervisorAgent.Intent.User.name()).orElse(END) ));
 
         var graph = new StateGraph<>( AgentContext.SCHEMA, serializer )
-                .addNode( "Supervisor", SupervisorAgent.of(modelThinking) )
+                .addNode( "Supervisor", SupervisorAgent.of(modelThinking, memory) )
                 .addNode( SupervisorAgent.Intent.User.name(), userProxy )
                 .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking ) )
                 .addNode( SupervisorAgent.Intent.BillPayment.name(), PaymentAgent.of( modelThinking ) )
@@ -82,8 +87,12 @@ public class AgentWorkflowBuilder {
 
 class StateSerializer extends ObjectStreamStateSerializer<AgentContext> {
 
-    public StateSerializer() {
-        super(AgentContext::new);
+    public StateSerializer( AgentMemory memory ) {
+        super( (initialValue ) -> {
+            var result = new AgentContext( initialValue );
+            memory.setState( result );
+            return result;
+        });
 
         mapper().register(ToolExecutionRequest.class, new ToolExecutionRequestSerializer());
         mapper().register(ChatMessage.class, new ChatMesssageSerializer());
