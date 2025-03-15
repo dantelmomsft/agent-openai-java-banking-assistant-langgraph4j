@@ -41,7 +41,7 @@ public class AgentWorkflowBuilder {
 
         var serializer = new StateSerializer(memory);
 
-        AsyncNodeAction<AgentWorkflowState> transactionAgent = TransactionsReportingAgent.of( modelThinking );
+        AsyncNodeAction<AgentWorkflowState> transactionAgent = TransactionsReportingAgent.of( modelThinking, memory );
 
         AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state -> Map.of()  );
 
@@ -52,8 +52,8 @@ public class AgentWorkflowBuilder {
         var graph = new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgent.of(modelThinking, memory) )
                 .addNode( SupervisorAgent.Intent.User.name(), userProxy )
-                .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking ) )
-                .addNode( SupervisorAgent.Intent.BillPayment.name(), PaymentAgent.of( modelThinking ) )
+                .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking, memory ) )
+                .addNode( SupervisorAgent.Intent.BillPayment.name(), PaymentAgent.of( modelThinking, memory ) )
                 .addNode( SupervisorAgent.Intent.TransactionHistory.name(), transactionAgent)
                 .addNode( SupervisorAgent.Intent.RepeatTransaction.name(), transactionAgent )
                 .addEdge(  START, "Supervisor" )
