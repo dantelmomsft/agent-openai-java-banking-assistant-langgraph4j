@@ -93,72 +93,41 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+
+<!--
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+-->
 
+<!--
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<scope>compile</scope>
 		</dependency>
+-->
+
+<!--
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 			<scope>compile</scope>
 		</dependency>
+-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-inline</artifactId>
 			<version>${mockito-inline.version}</version>
 			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.azure</groupId>
-			<artifactId>azure-identity</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>com.azure</groupId>
-			<artifactId>azure-ai-documentintelligence</artifactId>
-			<version>1.0.0-beta.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20240303</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.azure</groupId>
-			<artifactId>azure-storage-blob</artifactId>
-		</dependency>
-
-		<!-- Semantic Kernel start-->
-		<dependency>
-			<groupId>com.microsoft.semantic-kernel</groupId>
-			<artifactId>semantickernel-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.microsoft.semantic-kernel</groupId>
-			<artifactId>semantickernel-aiservices-openai</artifactId>
-		</dependency>
-
-		<!-- Semantic Kernel end -->
-
-		<!-- Importing semantic kernel openapi-plugin as internal maven module -->
-		<dependency>
-			<groupId>com.microsoft.openai.samples.assistant</groupId>
-			<artifactId>semantickernel-openapi-plugin</artifactId>
-			<version>1.4.3</version>
 		</dependency>
 
 	</dependencies>

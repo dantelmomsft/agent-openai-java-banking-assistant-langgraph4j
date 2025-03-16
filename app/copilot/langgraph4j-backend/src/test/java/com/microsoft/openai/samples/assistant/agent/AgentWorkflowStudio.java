@@ -1,9 +1,12 @@
 package com.microsoft.openai.samples.assistant.agent;
 
+import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.GraphStateException;
+import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.studio.springboot.AbstractLangGraphStudioConfig;
 import org.bsc.langgraph4j.studio.springboot.LangGraphFlow;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Configuration;
 
@@ -34,7 +37,12 @@ public class AgentWorkflowStudio {
 
             return  LangGraphFlow.builder()
                     .title("LangGraph Studio (Sample)")
+                    .addInputStringArg( "messages" )
                     .stateGraph( workflow )
+                    .compileConfig( CompileConfig.builder()
+                            .checkpointSaver( new MemorySaver() )
+                            .interruptBefore( SupervisorAgent.Intent.User.name())
+                            .build())
                     .build();
 
         }
