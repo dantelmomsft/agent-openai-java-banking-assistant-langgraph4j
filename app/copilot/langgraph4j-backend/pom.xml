@@ -29,7 +29,7 @@
 		<maven.spotbugs-plugin.version>4.7.3.6</maven.spotbugs-plugin.version>
 
 		<langchain4j.version>1.0.0-beta1</langchain4j.version>
-		<langgraph4j.version>1.4-SNAPSHOT</langgraph4j.version>
+		<langgraph4j.version>1.5-SNAPSHOT</langgraph4j.version>
 	</properties>
 
 	<dependencyManagement>
