@@ -6,7 +6,6 @@ import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.studio.springboot.AbstractLangGraphStudioConfig;
 import org.bsc.langgraph4j.studio.springboot.LangGraphFlow;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Configuration;
 
