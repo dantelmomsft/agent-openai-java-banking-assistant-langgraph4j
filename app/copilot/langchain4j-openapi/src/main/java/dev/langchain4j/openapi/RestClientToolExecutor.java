@@ -1,18 +1,18 @@
 // Copyright (c) Microsoft. All rights reserved.
-package com.microsoft.semantickernel.samples.openapi;
+package dev.langchain4j.openapi;
 
-import com.azure.core.http.ContentType;
-import com.azure.core.http.HttpClient;
-import com.azure.core.http.HttpHeaderName;
-import com.azure.core.http.HttpHeaders;
-import com.azure.core.http.HttpMethod;
-import com.azure.core.http.HttpRequest;
-import com.azure.core.http.HttpResponse;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microsoft.semantickernel.contextvariables.ContextVariable;
-import com.microsoft.semantickernel.semanticfunctions.KernelFunctionArguments;
+
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.exception.HttpException;
+import dev.langchain4j.http.client.HttpClient;
+import dev.langchain4j.http.client.HttpMethod;
+import dev.langchain4j.http.client.HttpRequest;
+import dev.langchain4j.http.client.SuccessfulHttpResponse;
+import dev.langchain4j.service.tool.ToolExecutor;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.parameters.Parameter;
@@ -20,20 +20,19 @@ import io.swagger.v3.oas.models.parameters.PathParameter;
 import io.swagger.v3.oas.models.parameters.QueryParameter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Mono;
+
 
 /**
  * Plugin for making HTTP requests specifically to endpoints discovered via OpenAPI.
  */
 public class RestClientToolExecutor implements ToolExecutor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenAPIHttpRequestPlugin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestClientToolExecutor.class);
 
     private final String serverUrl;
     private final String path;
@@ -41,7 +40,7 @@ public class RestClientToolExecutor implements ToolExecutor {
     private final HttpClient client;
     private final HttpMethod method;
     private final Operation operation;
-    private final HttpHeaders httpHeaders;
+    private final Map<String, List<String>>  httpHeaders;
 
     public RestClientToolExecutor(
         HttpMethod method,
@@ -49,15 +48,19 @@ public class RestClientToolExecutor implements ToolExecutor {
         String path,
         PathItem pathItem,
         HttpClient client,
-        HttpHeaders httpHeaders,
+        Map<String, List<String>>  httpHeaders,
         Operation operation) {
         this.method = method;
         this.serverUrl = serverUrl;
         this.path = path;
         this.pathItem = pathItem;
         this.client = client;
-        this.httpHeaders = httpHeaders;
         this.operation = operation;
+
+        this.httpHeaders = Objects.requireNonNullElseGet(httpHeaders, HashMap::new);
+
+
+
     }
 
     
@@ -65,16 +68,11 @@ public class RestClientToolExecutor implements ToolExecutor {
      * Executes the HTTP request and return the body of the response.
      */
     public String execute(ToolExecutionRequest toolExecutionRequest, Object memoryId) {
-    
-    }
 
-    /**
-     * Executes the HTTP request and return the body of the response.
-     *
-     * @param arguments The arguments to the http request.
-     * @return The body of the response.
-     */
-    public Mono<String> execute(KernelFunctionArguments arguments) {
+        // Use jackson to convert the json string to a Map<string,Object>
+        Map<String,Object> arguments = ToolExecutionRequestUtil.argumentsAsMap(toolExecutionRequest.arguments());
+
+
         String body = getBody(arguments);
         String query = buildQueryString(arguments);
         String path = buildQueryPath(arguments);
@@ -86,77 +84,121 @@ public class RestClientToolExecutor implements ToolExecutor {
             url = serverUrl + path;
         }
 
-        HttpRequest request = new HttpRequest(method, url);
-
-        HttpHeaders headers = new HttpHeaders();
-        if (httpHeaders != null) {
-            headers = headers.setAllHttpHeaders(httpHeaders);
-        }
+        HttpRequest request = null;
 
         if (body != null) {
-            headers = headers.add(HttpHeaderName.CONTENT_TYPE, ContentType.APPLICATION_JSON);
-            request = request.setBody(body);
+            httpHeaders.put("Content-Type", Collections.singletonList("application/json"));
+            request = HttpRequest.builder()
+                    .method(method)
+                    .url(url)
+                    .headers(httpHeaders)
+                    .body(body)
+                    .build();
+        } else {
+            request = HttpRequest.builder()
+                    .method(method)
+                    .url(url)
+                    .headers(httpHeaders)
+                    .build();
         }
 
-        if (headers.getSize() > 0) {
-            request.setHeaders(headers);
-        }
 
         LOGGER.debug("Executing {} {}", method.name(), url);
         if (body != null) {
             LOGGER.debug("Body: {}", body);
         }
 
-        return client
-            .send(request)
-            .flatMap(response -> {
-                if (response.getStatusCode() >= 400) {
-                    return Mono.error(new RuntimeException(
-                        "Request failed with status code: " + response.getStatusCode()));
-                } else {
-                    return Mono.just(response);
-                }
-            })
-            .flatMap(HttpResponse::getBodyAsString)
-            .doOnNext(response -> LOGGER.debug("Request response: {}", response));
+        SuccessfulHttpResponse response = null;
+
+        try {
+            response = client.execute(request);
+        } catch (HttpException e){
+            throw new RuntimeException("Http request failed. Server returned code ["+e.statusCode()+"] with error : " + e.getMessage());
+
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Http request failed with generic error : " + e.getMessage());
+        }
+        return response.body();
+
     }
 
-    private static @Nullable String getBody(KernelFunctionArguments arguments) {
+    protected String getBody(Map<String,Object> arguments) {
         String body = null;
         if (arguments.containsKey("requestbody")) {
-            ContextVariable<?> requestBody = arguments.get("requestbody");
-            if (requestBody != null) {
-                try {
-                    JsonNode tree = new ObjectMapper().readTree(requestBody.getValue(String.class));
-                    body = tree.toPrettyString();
-                } catch (JsonProcessingException e) {
-                    body = requestBody.getValue(String.class);
-                }
+            Object requestBody = arguments.get("requestbody");
+            if (requestBody != null) body = requestBody.toString();
+            try {
+                body = new ObjectMapper().writeValueAsString(requestBody);
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Failed to serialize to JSON the request body map:"+requestBody, e);
             }
             arguments.remove("requestbody");
         }
         return body;
     }
 
-    private String buildQueryPath(KernelFunctionArguments arguments) {
+    /**
+     * Builds the query string for the HTTP request.
+     * @param arguments The arguments to the HTTP request.
+     * @return The query string.
+     */
+    protected String buildQueryString(Map<String,Object> arguments) {
         return getParameterStreamOfArguments(arguments)
-            .filter(p -> p instanceof PathParameter)
-            .reduce(path, (path, parameter) -> {
-                String name = parameter.getName();
-                String rendered = getRenderedParameter(arguments, name);
-
-                return path.replaceAll("\\{" + name + "}", rendered);
-            }, (a, b) -> a + b);
+                .filter(p -> p instanceof QueryParameter)
+                .map(parameter -> {
+                    String name = parameter.getName();
+                    String rendered = encodeParameter(arguments, name);
+                    return name + "=" + rendered;
+                })
+                .collect(Collectors.joining("&"));
     }
 
-    private static String getRenderedParameter(
-        KernelFunctionArguments arguments, String name) {
-        ContextVariable<?> value = arguments.get(name);
+    /**
+     * Builds the path string for the HTTP request.
+     * @param arguments The arguments to the HTTP request.
+     * @return The path string.
+     */
+    protected String buildQueryPath(Map<String,Object> arguments) {
+        return getParameterStreamOfArguments(arguments)
+                .filter(p -> p instanceof PathParameter)
+                .reduce(path, (path, parameter) -> {
+                    String name = parameter.getName();
+                    String rendered = encodeParameter(arguments, name);
+
+                    return path.replaceAll("\\{" + name + "}", rendered);
+                }, (a, b) -> a + b);
+    }
+
+/**
+ * For all the arguments contained in the arguments map, return the parameters in OpenAPI specification that match the arguments names.
+ *
+ * @param arguments The map of arguments to match against the OpenAPI parameters.
+ * @return A stream of parameters that match the argument names.
+ */
+protected Stream<Parameter> getParameterStreamOfArguments(
+            Map<String,Object> arguments) {
+        if (operation.getParameters() == null) {
+            return Stream.empty();
+        }
+        return arguments
+                .keySet()
+                .stream()
+                .map(toolArgumentName -> operation
+                        .getParameters()
+                        .stream()
+                        .filter(param -> param.getName().equalsIgnoreCase(toolArgumentName)).findFirst())
+                .filter(Optional::isPresent)
+                .map(Optional::get);
+    }
+
+    protected static String encodeParameter(
+            Map<String,Object> arguments, String name) {
+        Object value = arguments.get(name);
 
         if (value == null) {
             throw new IllegalArgumentException("Missing value for path parameter: " + name);
         }
-        String rendered = value.getValue(String.class);
+        String rendered = value.toString();
 
         if (rendered == null) {
             throw new IllegalArgumentException("Path parameter value is null: " + name);
@@ -164,31 +206,5 @@ public class RestClientToolExecutor implements ToolExecutor {
         return URLEncoder.encode(rendered, StandardCharsets.US_ASCII);
     }
 
-    private String buildQueryString(KernelFunctionArguments arguments) {
-        return getParameterStreamOfArguments(arguments)
-            .filter(p -> p instanceof QueryParameter)
-            .map(parameter -> {
-                String name = parameter.getName();
-                String rendered = getRenderedParameter(arguments, name);
-                return name + "=" + rendered;
-            })
-            .collect(Collectors.joining("&"));
-    }
 
-    private Stream<Parameter> getParameterStreamOfArguments(
-        KernelFunctionArguments arguments) {
-        if (operation.getParameters() == null) {
-            return Stream.empty();
-        }
-        return arguments
-            .keySet()
-            .stream()
-            .map(contextVariable -> pathItem
-                .getGet()
-                .getParameters()
-                .stream()
-                .filter(param -> param.getName().equalsIgnoreCase(contextVariable)).findFirst())
-            .filter(Optional::isPresent)
-            .map(Optional::get);
-    }
 }
