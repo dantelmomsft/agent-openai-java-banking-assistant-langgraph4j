@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
 import static java.lang.String.format;
 import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
+import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 
 
 /**
@@ -125,6 +125,7 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentWorkflowState>
     }
 
     private final Service service;
+    private final ChatMemory memory;
 
     /**
      * Creates an {@code AsyncNodeAction} with a new {@code SupervisorAgent}.
@@ -142,8 +143,9 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentWorkflowState>
      * @param model the {@link ChatLanguageModel} to be used by this agent.
      */
     private SupervisorAgent( ChatLanguageModel model, ChatMemory memory ) {
+        this.memory = memory;
 
-        service = AiServices.builder( Service.class )
+        this.service = AiServices.builder( Service.class )
                 .chatLanguageModel( model )
                 .chatMemoryProvider ( id -> memory )
                 .build();
@@ -176,7 +178,7 @@ public class SupervisorAgent implements NodeActionWithConfig<AgentWorkflowState>
 
         log.debug( "supervisor result {}", result);
 
-        return result.toMap();
+        return mergeMap( Map.of( "memory", memory.messages() ), result.toMap() );
 
     }
 }

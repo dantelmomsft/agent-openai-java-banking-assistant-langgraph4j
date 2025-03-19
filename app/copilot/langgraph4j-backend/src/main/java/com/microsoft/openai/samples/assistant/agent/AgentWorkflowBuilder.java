@@ -1,7 +1,6 @@
 package com.microsoft.openai.samples.assistant.agent;
 
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import org.bsc.langgraph4j.CompileConfig;
@@ -11,9 +10,7 @@ import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncEdgeAction;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
-import org.bsc.langgraph4j.langchain4j.serializer.std.ChatMesssageSerializer;
-import org.bsc.langgraph4j.langchain4j.serializer.std.ToolExecutionRequestSerializer;
-import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
+import org.bsc.langgraph4j.langchain4j.serializer.jackson.JacksonMessagesStateSerializer;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;
@@ -37,13 +34,16 @@ public class AgentWorkflowBuilder {
                 .build();
 
         // var  memory = MessageWindowChatMemory.withMaxMessages(10);
-        var memory = new AgentMemory();
+        var memory = MessageWindowChatMemory.withMaxMessages(10);
 
-        var serializer = new StateSerializer(memory);
+        var serializer = new StateSerializer();
 
         AsyncNodeAction<AgentWorkflowState> transactionAgent = TransactionsReportingAgent.of( modelThinking, memory );
 
-        AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state -> Map.of()  );
+        AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state ->
+            // remove intent from state
+            new HashMap<>() {{ put("intent", null ); }}
+        );
 
         AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) ->
                 state.intent().orElseGet( () ->
@@ -87,17 +87,24 @@ public class AgentWorkflowBuilder {
 }
 
 
+
+class StateSerializer extends JacksonMessagesStateSerializer<AgentWorkflowState> {
+
+    public StateSerializer() {
+        super( AgentWorkflowState::new );
+    }
+}
+
+/*
 class StateSerializer extends ObjectStreamStateSerializer<AgentWorkflowState> {
 
-    public StateSerializer( AgentMemory memory ) {
-        super( (initialValue ) -> {
-            var result = new AgentWorkflowState( initialValue );
-            memory.setState( result );
-            return result;
-        });
+    public StateSerializer() {
+        super( AgentWorkflowState::new );
 
         mapper().register(ToolExecutionRequest.class, new ToolExecutionRequestSerializer());
         mapper().register(ChatMessage.class, new ChatMesssageSerializer());
     }
 }
+
+*/
 

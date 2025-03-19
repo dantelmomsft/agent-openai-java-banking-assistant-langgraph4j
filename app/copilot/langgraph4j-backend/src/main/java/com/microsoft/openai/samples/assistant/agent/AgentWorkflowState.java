@@ -16,6 +16,11 @@ public class AgentWorkflowState extends MessagesState<ChatMessage>  {
             "messages", new MessagesChannel(ArrayList::new), // inherit schema
             "memory", AppenderChannel.of(ArrayList::new));
 
+    // Required by Jackson Serialization
+    public AgentWorkflowState() {
+        super( Map.of() );
+    }
+
     public AgentWorkflowState(Map<String, Object> initData ) {
         super( initData );
     }
