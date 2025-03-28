@@ -71,7 +71,8 @@ class OpenAPIToolsImporterTest {
       Map<ToolSpecification, ToolExecutor> specifications = OpenAPIToolsImporter.builder()
               .withToolName("testTool")
               .withSpecPath("example-get-noparams.yaml")
-              .build();
+              .build()
+              .getSpecificationsMaps();
 
         assertNotNull(specifications);
         assertEquals(1,specifications.size());
@@ -88,7 +89,8 @@ class OpenAPIToolsImporterTest {
         Map<ToolSpecification, ToolExecutor> specifications = OpenAPIToolsImporter.builder()
                 .withToolName("testTool")
                 .withSpecPath("example-get-pathparams.yaml")
-                .build();
+                .build()
+                .getSpecificationsMaps();
 
         assertNotNull(specifications);
         assertEquals(2, specifications.size());
@@ -119,7 +121,8 @@ class OpenAPIToolsImporterTest {
         Map<ToolSpecification, ToolExecutor> specifications = OpenAPIToolsImporter.builder()
                 .withToolName("testTool")
                 .withSpecPath("example-post-requestbody.yaml")
-                .build();
+                .build()
+                .getSpecificationsMaps();
 
         assertNotNull(specifications);
         assertEquals(1, specifications.size());
@@ -211,7 +214,8 @@ class OpenAPIToolsImporterTest {
         Map<ToolSpecification, ToolExecutor> specifications = OpenAPIToolsImporter.builder()
                 .withToolName("testTool")
                 .withSpecPath("example-post-requestbody.yaml")
-                .build();
+                .build()
+                .getSpecificationsMaps();
 
         ChatLanguageModel model = OpenAiChatModel.builder()
                 .apiKey("fakekey")

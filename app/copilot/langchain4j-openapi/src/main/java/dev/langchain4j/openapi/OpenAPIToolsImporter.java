@@ -33,7 +33,27 @@ public class OpenAPIToolsImporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(
             OpenAPIToolsImporter.class);
 
-    private OpenAPIToolsImporter(){}
+    private final Map<String , ToolSpecification> toolSpecificationsMap;
+    private final Map<String, ToolExecutor> toolExecutorMap;
+    private final Map<ToolSpecification, ToolExecutor> specificationsMap;
+
+    private OpenAPIToolsImporter(Builder builder){
+        toolSpecificationsMap = new HashMap<>();
+        toolExecutorMap = new HashMap<>();
+        specificationsMap = fromSchema(
+                builder.toolName,
+                builder.specPath,
+                builder.httpHeaders,
+                builder.client,
+                builder.connectionTimeout,
+                builder.readTimeout,
+                builder.serverUrl);
+
+        specificationsMap.forEach((k,v) -> {
+            toolSpecificationsMap.put(k.name(),k);
+            toolExecutorMap.put(k.name(),v);
+        });
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -85,13 +105,30 @@ public class OpenAPIToolsImporter {
             return this;
         }
 
+        public OpenAPIToolsImporter build(){
+            return new OpenAPIToolsImporter(this);
+        }
+
+        /*
         public Map<ToolSpecification, ToolExecutor> build() {
             return OpenAPIToolsImporter.fromSchema(toolName, specPath, httpHeaders, client, connectionTimeout,readTimeout, serverUrl);
-        }
+        }*/
     }
 
-    public static Map<ToolSpecification, ToolExecutor> fromSchema(
-        String pluginName,
+    public Map<ToolSpecification, ToolExecutor> getSpecificationsMaps() {
+        return specificationsMap;
+    }
+
+    public List<ToolSpecification> getToolSpecifications() {
+        return new ArrayList<>(toolSpecificationsMap.values());
+    }
+
+    public ToolExecutor getToolExecutor(String toolName) {
+        return toolExecutorMap.get(toolName);
+    }
+
+    private static Map<ToolSpecification, ToolExecutor> fromSchema(
+        String toolName,
         String specPath,
         @Nullable Map<String, List<String>> httpHeaders,
         @Nullable HttpClient client,
@@ -110,7 +147,7 @@ public class OpenAPIToolsImporter {
 
        return getSpecifications(
             client,
-            pluginName,
+            toolName,
             openAPI.getPaths(),
             serverUrl,
             httpHeaders);
@@ -139,7 +176,7 @@ public class OpenAPIToolsImporter {
 
     private static  Map<ToolSpecification, ToolExecutor> getSpecifications(
         HttpClient client,
-        String pluginName,
+        String toolName,
         Paths paths,
         String serverUrl,
         Map<String, List<String>> headers) {
@@ -152,7 +189,7 @@ public class OpenAPIToolsImporter {
 
             specifications.putAll(buildSpecificationEntry(
                 client,
-                pluginName,
+                toolName,
                 serverUrl,
                 path,
                 pathItem,
@@ -167,7 +204,7 @@ public class OpenAPIToolsImporter {
 
     private static Map<ToolSpecification,ToolExecutor> buildSpecificationEntry(
         HttpClient client,
-        String pluginName,
+        String toolName,
         String serverUrl,
         String path,
         PathItem pathItem,
@@ -180,18 +217,18 @@ public class OpenAPIToolsImporter {
 
         if (pathItem.getGet() != null) {
             checkOperationId(path,"get",pathItem.getGet());
-            toolSpecification = getToolSpecificationFromRequest(pluginName,pathItem.getGet());
-            toolExecutor = new RestClientToolExecutor(HttpMethod.GET,serverUrl,path,pathItem,null,headers,pathItem.getGet());
+            toolSpecification = getToolSpecificationFromRequest(toolName,pathItem.getGet());
+            toolExecutor = new RestClientToolExecutor(HttpMethod.GET,serverUrl,path,pathItem,client,headers,pathItem.getGet());
         }
         if (pathItem.getPost() != null) {
             checkOperationId(path,"post",pathItem.getPost());
-            toolSpecification = getToolSpecificationFromRequest(pluginName,pathItem.getPost());
-            toolExecutor = new RestClientToolExecutor(HttpMethod.POST,serverUrl,path,pathItem,null,headers,pathItem.getPost());
+            toolSpecification = getToolSpecificationFromRequest(toolName,pathItem.getPost());
+            toolExecutor = new RestClientToolExecutor(HttpMethod.POST,serverUrl,path,pathItem,client,headers,pathItem.getPost());
         }
         if (pathItem.getDelete() != null) {
             checkOperationId(path,"delete",pathItem.getDelete());
-            toolSpecification = getToolSpecificationFromRequest(pluginName,pathItem.getPost());
-            toolExecutor = new RestClientToolExecutor(HttpMethod.DELETE,serverUrl,path,pathItem,null,headers,pathItem.getPost());
+            toolSpecification = getToolSpecificationFromRequest(toolName,pathItem.getPost());
+            toolExecutor = new RestClientToolExecutor(HttpMethod.DELETE,serverUrl,path,pathItem,client,headers,pathItem.getPost());
         }
         if (pathItem.getPut() != null) {
             // toolSpecification = getToolSpecificationFromRequest(pluginName,pathItem.getPost());
@@ -218,7 +255,7 @@ public class OpenAPIToolsImporter {
 
 
     private static ToolSpecification getToolSpecificationFromRequest(
-        String pluginName,
+        String toolName,
         Operation operation
        ) {
 
@@ -253,7 +290,7 @@ public class OpenAPIToolsImporter {
 
 
     return ToolSpecification.builder()
-                .name(pluginName+"-"+operation.getOperationId())
+                .name(toolName+"-"+operation.getOperationId())
                 .description(operation.getDescription())
                 .parameters(JsonObjectSchema.builder().addProperties(properties).required(requiredList).build())
                 .build();

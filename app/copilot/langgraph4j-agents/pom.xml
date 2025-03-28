@@ -9,118 +9,72 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.microsoft.openai.samples.assistant</groupId>
-	<artifactId>personal-finance-assistant-copilot</artifactId>
+	<artifactId>langgraph4j-agents</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
-	<name>personal-finance-assistant-copilot</name>
-	<description>This sample demonstrate how to create a generative ai multi-agent solution for a banking personal assistant </description>
+	<name>langgraph agents based implementation</name>
 
 	<properties>
 		<java.version>17</java.version>
-
-		<spring-cloud-azure.version>5.20.0</spring-cloud-azure.version>
-		<semantic-kernel.version>1.4.3</semantic-kernel.version>
-		<mockito-inline.version>4.5.1</mockito-inline.version>
-		<maven.compiler-plugin.version>3.11.0</maven.compiler-plugin.version>
-
-		<maven.spotless-plugin.version>2.40.0</maven.spotless-plugin.version>
-		<google.java.format.version>1.18.1</google.java.format.version>
-		<com.uber.nullaway.version>0.10.14</com.uber.nullaway.version>
-		<google.errorprone.core.version>2.22.0</google.errorprone.core.version>
-		<maven.spotbugs-plugin.version>4.7.3.6</maven.spotbugs-plugin.version>
+		<langchain4j.version>1.0.0-beta1</langchain4j.version>
+		<langgraph4j.version>1.5.0</langgraph4j.version>
 	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.azure.spring</groupId>
-				<artifactId>spring-cloud-azure-dependencies</artifactId>
-				<version>${spring-cloud-azure.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>com.microsoft.semantic-kernel</groupId>
-				<artifactId>semantickernel-bom</artifactId>
-				<version>${semantic-kernel.version}</version>
-				<scope>import</scope>
-				<type>pom</type>
-			</dependency>
-
-			<!-- Not sure why the build seems to pick the wrong version for this  -->
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-lang3</artifactId>
-				<version>3.13.0</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<groupId>org.bsc.langgraph4j</groupId>
+			<artifactId>langgraph4j-core</artifactId>
+			<version>${langgraph4j.version}</version>
 		</dependency>
+
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
+			<groupId>org.bsc.langgraph4j</groupId>
+			<artifactId>langgraph4j-langchain4j</artifactId>
+			<version>${langgraph4j.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-ollama</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bsc.langgraph4j</groupId>
+			<artifactId>langgraph4j-studio-springboot</artifactId>
+			<version>${langgraph4j.version}</version>
+		</dependency>
+
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<scope>compile</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 			<scope>compile</scope>
 		</dependency>
 
+        <dependency>
+            <groupId>com.microsoft.openai.samples.assistant</groupId>
+            <artifactId>langchain4j-openapi</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.11.3</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-inline</artifactId>
-			<version>${mockito-inline.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.azure</groupId>
-			<artifactId>azure-identity</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>com.azure</groupId>
-			<artifactId>azure-ai-documentintelligence</artifactId>
-			<version>1.0.0-beta.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20240303</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.azure</groupId>
-			<artifactId>azure-storage-blob</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>com.microsoft.openai.samples.assistant</groupId>
-			<artifactId>langchain4j-openapi</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.microsoft.openai.samples.assistant</groupId>
-			<artifactId>langgraph4j-agents</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-
-	</dependencies>
+    </dependencies>
 
 	<build>
 		<plugins>
