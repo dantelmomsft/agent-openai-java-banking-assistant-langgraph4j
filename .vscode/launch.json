@@ -1,0 +1,83 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "AccountApplication",
+            "request": "launch",
+            "mainClass": "com.microsoft.openai.samples.assistant.business.AccountApplication",
+            "projectName": "account"
+        },
+        {
+            "type": "java",
+            "name": "PaymentApplication",
+            "request": "launch",
+            "mainClass": "com.microsoft.openai.samples.assistant.business.PaymentApplication",
+            "projectName": "payment"
+        },
+        {
+            "type": "java",
+            "name": "CopilotApplication",
+            "request": "launch",
+            "mainClass": "com.microsoft.openai.samples.assistant.CopilotApplication",
+            "projectName": "personal-finance-assistant-copilot"
+        },
+        {
+            "type": "java",
+            "name": "ExampleAdoptiumImporter",
+            "request": "launch",
+            "mainClass": "ExampleAdoptiumImporter",
+            "projectName": "semantickernel-openapi-plugin",
+            "env": {
+                "PLUGIN_DIR": ".",
+                "AZURE_CLIENT_KEY": "09ba97a422c34c5c8268a31bb7c150bc",
+                "CLIENT_ENDPOINT": "https://ai-test-instance1.openai.azure.com/",
+                "MODEL_ID": "gpt-4o"
+            }
+        },
+        {
+            "type": "java",
+            "name": "ExampleAuthenticatedRequestImporter",
+            "request": "launch",
+            "mainClass": "ExampleAuthenticatedRequestImporter",
+            "projectName": "semantickernel-openapi-plugin"
+        },
+        {
+            "type": "java",
+            "name": "ExamplePetstoreImporter",
+            "request": "launch",
+            "mainClass": "ExamplePetstoreImporter",
+            "projectName": "semantickernel-openapi-plugin"
+        },
+        {
+            "type": "java",
+            "name": "TransactionsHistoryApplication",
+            "request": "launch",
+            "mainClass": "com.microsoft.openai.samples.assistant.business.TransactionsHistoryApplication",
+            "projectName": "transactions-history"
+        },
+        {
+            "type": "java",
+            "name": "ExampleOpenAPIParent",
+            "request": "launch",
+            "mainClass": "ExampleOpenAPIParent",
+            "projectName": "semantickernel-openapi-plugin",
+            "env": {
+                "PLUGIN_DIR": ".",
+                "CLIENT_KEY": "your-client-key",
+                "AZURE_CLIENT_KEY": "your-azure-client-key",
+                "CLIENT_ENDPOINT": "your-client-endpoint",
+                "MODEL_ID": "gpt-35-turbo-2"
+            }
+        }
+    ]
+}
