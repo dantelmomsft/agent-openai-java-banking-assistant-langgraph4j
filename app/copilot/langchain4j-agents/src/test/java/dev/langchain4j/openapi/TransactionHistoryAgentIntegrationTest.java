@@ -1,13 +1,16 @@
 package dev.langchain4j.openapi;
 
 import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.TransactionHistoryAgent;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 
 import java.util.ArrayList;
 
-public class AccountAgentIntegrationTest {
+public class TransactionHistoryAgentIntegrationTest {
 
     public static void main(String[] args) throws Exception {
 
@@ -20,17 +23,18 @@ public class AccountAgentIntegrationTest {
                 .logRequestsAndResponses(true)
                 .build();
 
-        var accountAgent = new AccountAgent(azureOpenAiChatModel,"bob.user@contoso.com","http://localhost:8070");
+        var transactionHistoryAgent = new TransactionHistoryAgent(azureOpenAiChatModel,
+                "bob.user@contoso.com",
+                "http://localhost:8090",
+                "http://localhost:8070");
 
         var chatHistory = new ArrayList<ChatMessage>();
-        chatHistory.add(UserMessage.from("How much money do I have in my account?"));
 
-        accountAgent.invoke(chatHistory);
+
+        chatHistory.add(UserMessage.from("When was las time I've paid contoso?"));
+        transactionHistoryAgent.invoke(chatHistory);
         System.out.println(chatHistory.get(chatHistory.size()-1));
 
-        chatHistory.add(UserMessage.from("what about my visa"));
-        accountAgent.invoke(chatHistory);
-        System.out.println(chatHistory.get(chatHistory.size()-1));
 
     }
 }

@@ -127,6 +127,10 @@ public class OpenAPIToolsImporter {
         return toolExecutorMap.get(toolName);
     }
 
+    public Map<String, ToolExecutor> getToolExecutors() {
+        return toolExecutorMap;
+    }
+
     private static Map<ToolSpecification, ToolExecutor> fromSchema(
         String toolName,
         String specPath,
@@ -187,7 +191,7 @@ public class OpenAPIToolsImporter {
             String path = entry.getKey();
             PathItem pathItem = entry.getValue();
 
-            specifications.putAll(buildSpecificationEntry(
+            specifications.putAll(buildSpecificationEntries(
                 client,
                 toolName,
                 serverUrl,
@@ -202,7 +206,7 @@ public class OpenAPIToolsImporter {
 
     }
 
-    private static Map<ToolSpecification,ToolExecutor> buildSpecificationEntry(
+    private static Map<ToolSpecification,ToolExecutor> buildSpecificationEntries(
         HttpClient client,
         String toolName,
         String serverUrl,
@@ -213,22 +217,26 @@ public class OpenAPIToolsImporter {
 
         ToolSpecification toolSpecification = null;
         RestClientToolExecutor toolExecutor = null;
-
+        HashMap <ToolSpecification,ToolExecutor> specificationEntries = new HashMap<>();
 
         if (pathItem.getGet() != null) {
             checkOperationId(path,"get",pathItem.getGet());
-            toolSpecification = getToolSpecificationFromRequest(toolName,pathItem.getGet());
-            toolExecutor = new RestClientToolExecutor(HttpMethod.GET,serverUrl,path,pathItem,client,headers,pathItem.getGet());
+            specificationEntries.put(
+                    getToolSpecificationFromRequest(toolName,pathItem.getGet()),
+                    new RestClientToolExecutor(HttpMethod.GET,serverUrl,path,pathItem,client,headers,pathItem.getGet())) ;
         }
         if (pathItem.getPost() != null) {
             checkOperationId(path,"post",pathItem.getPost());
-            toolSpecification = getToolSpecificationFromRequest(toolName,pathItem.getPost());
-            toolExecutor = new RestClientToolExecutor(HttpMethod.POST,serverUrl,path,pathItem,client,headers,pathItem.getPost());
+            specificationEntries.put(
+                    getToolSpecificationFromRequest(toolName,pathItem.getPost()),
+                    new RestClientToolExecutor(HttpMethod.POST,serverUrl,path,pathItem,client,headers,pathItem.getPost())) ;
+
         }
         if (pathItem.getDelete() != null) {
             checkOperationId(path,"delete",pathItem.getDelete());
-            toolSpecification = getToolSpecificationFromRequest(toolName,pathItem.getPost());
-            toolExecutor = new RestClientToolExecutor(HttpMethod.DELETE,serverUrl,path,pathItem,client,headers,pathItem.getPost());
+            specificationEntries.put(
+                    getToolSpecificationFromRequest(toolName,pathItem.getDelete()),
+                    new RestClientToolExecutor(HttpMethod.DELETE,serverUrl,path,pathItem,client,headers,pathItem.getDelete())) ;
         }
         if (pathItem.getPut() != null) {
             // toolSpecification = getToolSpecificationFromRequest(pluginName,pathItem.getPost());
@@ -242,7 +250,7 @@ public class OpenAPIToolsImporter {
             throw new IllegalArgumentException ("PATCH method not supported by langchain4j HTTP client");
         }
 
-        return  Map.of(toolSpecification, toolExecutor);
+        return  specificationEntries;
 
 
     }

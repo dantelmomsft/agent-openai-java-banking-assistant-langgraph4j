@@ -124,15 +124,15 @@ public class RestClientToolExecutor implements ToolExecutor {
 
     protected String getBody(Map<String,Object> arguments) {
         String body = null;
-        if (arguments.containsKey("requestbody")) {
-            Object requestBody = arguments.get("requestbody");
+        if (arguments.containsKey("requestBody")) {
+            Object requestBody = arguments.get("requestBody");
             if (requestBody != null) body = requestBody.toString();
             try {
                 body = new ObjectMapper().writeValueAsString(requestBody);
             } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException("Failed to serialize to JSON the request body map:"+requestBody, e);
             }
-            arguments.remove("requestbody");
+            arguments.remove("requestBody");
         }
         return body;
     }

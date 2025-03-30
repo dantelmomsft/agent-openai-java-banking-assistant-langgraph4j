@@ -5,24 +5,25 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import java.io.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * This class is a proxy to the Blob storage API. It is responsible for: - calling the API -
  * handling errors and retry strategy - add monitoring points - add circuit breaker with exponential
  * backoff
  */
-@Component
+
 public class BlobStorageProxy {
 
     private final BlobContainerClient client;
 
     public BlobStorageProxy(
-            @Value("${storage-account.service}") String storageAccountServiceName,
-            @Value("${blob.container.name}") String containerName,
+            String storageAccountServiceName,
+            String containerName,
             TokenCredential tokenCredential) {
 
         String endpoint = "https://%s.blob.core.windows.net".formatted(storageAccountServiceName);

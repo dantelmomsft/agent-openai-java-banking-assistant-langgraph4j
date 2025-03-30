@@ -18,10 +18,6 @@
     <artifactId>langchain4j-openapi</artifactId>
     <name>LangChain4j :: Integration :: Open API Tools Importer</name>
 
-    <properties>
-        <langchain4j.version>1.0.0-beta2</langchain4j.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>dev.langchain4j</groupId>
@@ -87,17 +83,6 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>16</source>
-                    <target>16</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+
 
 </project>
