@@ -1,4 +1,4 @@
-package dev.langchain4j.openapi;
+package dev.langchain4j.openapi.mcp;
 
 import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
 import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
@@ -6,16 +6,13 @@ import com.azure.identity.AzureCliCredentialBuilder;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
 import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 
 import java.util.ArrayList;
 
-public class PaymentAgentIntegrationTest {
+public class PaymentMCPAgentIntegrationWithImageTest {
 
     public static void main(String[] args) throws Exception {
 
@@ -38,9 +35,14 @@ public class PaymentAgentIntegrationTest {
                                         "http://localhost:8060");
 
         var chatHistory = new ArrayList<ChatMessage>();
-        chatHistory.add(UserMessage.from("Please pay the bill: bill id 1234, payee name contoso, total amount 30."));
+        chatHistory.add(UserMessage.from("Please pay this bill gori.png"));
 
+        //this flow should activate the scanInvoice tool
 
+        paymentAgent.invoke(chatHistory);
+        System.out.println(chatHistory.get(chatHistory.size()-1));
+
+        chatHistory.add(UserMessage.from("yep, they are correct"));
         paymentAgent.invoke(chatHistory);
         System.out.println(chatHistory.get(chatHistory.size()-1));
 
@@ -60,9 +62,8 @@ public class PaymentAgentIntegrationTest {
 
     private static BlobStorageProxy getBlobStorageProxyClient() {
 
-        String storageAccountService = "https://%s.blob.core.windows.net".formatted(System.getenv("AZURE_STORAGE_ACCOUNT"));
         String containerName = "content";
-        return new BlobStorageProxy(storageAccountService,containerName,new AzureCliCredentialBuilder().build());
+        return new BlobStorageProxy(System.getenv("AZURE_STORAGE_ACCOUNT"),containerName,new AzureCliCredentialBuilder().build());
     }
 
     private static DocumentIntelligenceClient getDocumentIntelligenceClient() {

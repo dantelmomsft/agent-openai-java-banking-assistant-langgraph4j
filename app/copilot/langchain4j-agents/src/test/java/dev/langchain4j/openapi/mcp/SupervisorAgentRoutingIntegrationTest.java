@@ -1,21 +1,25 @@
-package dev.langchain4j.openapi;
+package dev.langchain4j.openapi.mcp;
 
 import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
 import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
 import com.azure.identity.AzureCliCredentialBuilder;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.TransactionHistoryAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.PaymentMCPAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.TransactionHistoryMCPAgent;
 import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class PaymentAgentIntegrationTest {
+public class SupervisorAgentRoutingIntegrationTest {
 
     public static void main(String[] args) throws Exception {
 
@@ -30,39 +34,41 @@ public class PaymentAgentIntegrationTest {
 
         var documentIntelligenceInvoiceScanHelper = new DocumentIntelligenceInvoiceScanHelper(getDocumentIntelligenceClient(),getBlobStorageProxyClient());
 
-        var paymentAgent = new PaymentAgent(azureOpenAiChatModel,
-                                                    documentIntelligenceInvoiceScanHelper,
-                                      "bob.user@contoso.com",
-                                      "http://localhost:8090",
-                                        "http://localhost:8070",
-                                        "http://localhost:8060");
+        var accountAgent = new AccountMCPAgent(azureOpenAiChatModel,"bob.user@contoso.com",
+                "http://localhost:8070/sse");
+        var transactionHistoryAgent = new TransactionHistoryMCPAgent(azureOpenAiChatModel,
+                "bob.user@contoso.com",
+                "http://localhost:8090/sse",
+                "http://localhost:8070/sse");
+        var paymentAgent = new PaymentMCPAgent(azureOpenAiChatModel,
+                documentIntelligenceInvoiceScanHelper,
+                "bob.user@contoso.com",
+                "http://localhost:8090/sse",
+                "http://localhost:8070/sse",
+                "http://localhost:8060/sse");
 
+        var supervisorAgent = new SupervisorAgent(azureOpenAiChatModel, List.of(accountAgent,transactionHistoryAgent,paymentAgent));
         var chatHistory = new ArrayList<ChatMessage>();
-        chatHistory.add(UserMessage.from("Please pay the bill: bill id 1234, payee name contoso, total amount 30."));
 
 
-        paymentAgent.invoke(chatHistory);
+        chatHistory.add(UserMessage.from("How much money do I have in my account?"));
+        supervisorAgent.invoke(chatHistory);
         System.out.println(chatHistory.get(chatHistory.size()-1));
 
-
-        chatHistory.add(UserMessage.from("use my visa"));
-        paymentAgent.invoke(chatHistory);
+        chatHistory.add(UserMessage.from("what about my visa"));
+        supervisorAgent.invoke(chatHistory);
         System.out.println(chatHistory.get(chatHistory.size()-1));
 
-
-        chatHistory.add(UserMessage.from("yes please proceed with payment"));
-        paymentAgent.invoke(chatHistory);
+        chatHistory.add(UserMessage.from("When was las time I've paid contoso?"));
+        supervisorAgent.invoke(chatHistory);
         System.out.println(chatHistory.get(chatHistory.size()-1));
-
-
 
     }
 
     private static BlobStorageProxy getBlobStorageProxyClient() {
 
-        String storageAccountService = "https://%s.blob.core.windows.net".formatted(System.getenv("AZURE_STORAGE_ACCOUNT"));
         String containerName = "content";
-        return new BlobStorageProxy(storageAccountService,containerName,new AzureCliCredentialBuilder().build());
+        return new BlobStorageProxy(System.getenv("AZURE_STORAGE_ACCOUNT"),containerName,new AzureCliCredentialBuilder().build());
     }
 
     private static DocumentIntelligenceClient getDocumentIntelligenceClient() {

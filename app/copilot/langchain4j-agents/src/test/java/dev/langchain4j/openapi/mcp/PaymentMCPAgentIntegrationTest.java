@@ -1,4 +1,4 @@
-package dev.langchain4j.openapi;
+package dev.langchain4j.openapi.mcp;
 
 import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
 import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
@@ -6,16 +6,13 @@ import com.azure.identity.AzureCliCredentialBuilder;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
 import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 
 import java.util.ArrayList;
 
-public class PaymentAgentIntegrationTest {
+public class PaymentMCPAgentIntegrationTest {
 
     public static void main(String[] args) throws Exception {
 
@@ -66,7 +63,7 @@ public class PaymentAgentIntegrationTest {
     }
 
     private static DocumentIntelligenceClient getDocumentIntelligenceClient() {
-        String endpoint = "https://%s.cognitiveservices.azure.com".formatted(System.getenv("AZURE_DOCUMENT_INTELLIGENCE_SERVICE"));
+        String endpoint = "https://%s.cognitiveservices.azure.com".formatted(System.getenv("AZURE_STORAGE_ACCOUNT"));
 
         return new DocumentIntelligenceClientBuilder()
                 .credential(new AzureCliCredentialBuilder().build())

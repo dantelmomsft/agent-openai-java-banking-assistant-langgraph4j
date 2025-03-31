@@ -1,22 +1,17 @@
-package com.microsoft.openai.samples.assistant.langchain4j.agent;
+package com.microsoft.openai.samples.assistant.langchain4j.agent.mcp;
 
 import com.microsoft.openai.samples.assistant.agent.AgentExecutionException;
-import com.microsoft.openai.samples.assistant.agent.OpenAPIImporterMetadata;
-import com.microsoft.openai.samples.assistant.agent.OpenAPIToolAgent;
 import com.microsoft.openai.samples.assistant.agent.AgentMetadata;
+import com.microsoft.openai.samples.assistant.agent.mcp.MCPProtocolType;
+import com.microsoft.openai.samples.assistant.agent.mcp.MCPServerMetadata;
+import com.microsoft.openai.samples.assistant.agent.mcp.MCPToolAgent;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
 import com.microsoft.openai.samples.assistant.langchain4j.tools.InvoiceScanTool;
-
-import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;
-
 import dev.langchain4j.service.tool.DefaultToolExecutor;
-import dev.langchain4j.service.tool.ToolExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.time.ZoneId;
@@ -24,9 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-public class PaymentAgent extends OpenAPIToolAgent {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentAgent.class);
+public class PaymentMCPAgent extends MCPToolAgent {
 
     private final Prompt agentPrompt;
 
@@ -49,27 +42,25 @@ public class PaymentAgent extends OpenAPIToolAgent {
         Current timestamp:
         '{{currentDateTime}}'
         Don't try to guess accountId,paymentMethodId from the conversation.When submitting payment always use functions to retrieve accountId, paymentMethodId.
-    """;
+        """;
 
-    public PaymentAgent(ChatLanguageModel chatModel, DocumentIntelligenceInvoiceScanHelper documentIntelligenceInvoiceScanHelper, String loggedUserName, String transactionAPIUrl, String accountAPIUrl, String paymentsAPIUrl) {
-        super(chatModel, List.of(
-            new OpenAPIImporterMetadata("account-api", "account.yaml", accountAPIUrl),
-            new OpenAPIImporterMetadata("transaction-api", "transaction-history.yaml", transactionAPIUrl),
-            new OpenAPIImporterMetadata("payments-api", "payments.yaml", paymentsAPIUrl)
-        ));
-
-        extendToolMap(documentIntelligenceInvoiceScanHelper);
+    public PaymentMCPAgent(ChatLanguageModel chatModel, DocumentIntelligenceInvoiceScanHelper documentIntelligenceInvoiceScanHelper, String loggedUserName, String transactionMCPServerURL, String accountMCPServerUrl, String paymentsMCPServerUrl) {
+        super(chatModel, List.of(new MCPServerMetadata("payment", paymentsMCPServerUrl, MCPProtocolType.SSE),
+                new MCPServerMetadata("transaction", transactionMCPServerURL, MCPProtocolType.SSE),
+                new MCPServerMetadata("account", accountMCPServerUrl, MCPProtocolType.SSE)));
 
         if (loggedUserName == null || loggedUserName.isEmpty()) {
             throw new IllegalArgumentException("loggedUserName cannot be null or empty");
         }
 
+        extendToolMap(documentIntelligenceInvoiceScanHelper);
+
         PromptTemplate promptTemplate = PromptTemplate.from(PAYMENT_AGENT_SYSTEM_MESSAGE);
         var datetimeIso8601 = ZonedDateTime.now(ZoneId.of("UTC")).toInstant().toString();
 
         this.agentPrompt = promptTemplate.apply(Map.of(
-            "loggedUserName", loggedUserName,
-            "currentDateTime", datetimeIso8601
+                "loggedUserName", loggedUserName,
+                "currentDateTime", datetimeIso8601
         ));
     }
 
@@ -81,8 +72,8 @@ public class PaymentAgent extends OpenAPIToolAgent {
     @Override
     public AgentMetadata getMetadata() {
         return new AgentMetadata(
-            "Personal financial advisor for managing bill payments.",
-            List.of("PayBill", "ScanInvoice", "SubmitPayment")
+            "Personal financial advisor for submitting payment request.",
+            List.of("RetrievePaymentInfo", "DisplayPaymentDetails", "SubmitPayment")
         );
     }
 
@@ -91,14 +82,13 @@ public class PaymentAgent extends OpenAPIToolAgent {
         return agentPrompt.text();
     }
 
-
     protected void extendToolMap(DocumentIntelligenceInvoiceScanHelper documentIntelligenceInvoiceScanHelper) {
         try {
             Method scanInvoiceMethod = InvoiceScanTool.class.getMethod("scanInvoice", String.class);
             InvoiceScanTool invoiceScanTool = new InvoiceScanTool(documentIntelligenceInvoiceScanHelper);
 
             this.toolSpecifications.addAll(ToolSpecifications.toolSpecificationsFrom(InvoiceScanTool.class));
-            this.toolExecutorMap.put("scanInvoice", new DefaultToolExecutor(invoiceScanTool, scanInvoiceMethod));
+            this.extendedExecutorMap.put("scanInvoice", new DefaultToolExecutor(invoiceScanTool, scanInvoiceMethod));
         } catch (NoSuchMethodException e) {
             throw new AgentExecutionException("scanInvoice method not found in InvoiceScanTool class. Align class code to be used by Payment Agent", e);
         }
