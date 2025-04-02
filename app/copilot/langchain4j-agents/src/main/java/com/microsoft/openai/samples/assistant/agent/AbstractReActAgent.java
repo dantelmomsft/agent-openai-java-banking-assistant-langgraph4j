@@ -48,6 +48,7 @@ public abstract class AbstractReActAgent implements Agent {
 
             var aiMessage = chatModel.chat(request).aiMessage();
 
+            // ReAct planning with tools
             while (aiMessage != null && aiMessage.hasToolExecutionRequests()) {
                 List<ToolExecutionResultMessage> toolExecutionResultMessages = executeToolRequests(aiMessage.toolExecutionRequests());
 
@@ -62,6 +63,9 @@ public abstract class AbstractReActAgent implements Agent {
                 aiMessage = chatModel.chat(toolExecutionResultResponseRequest).aiMessage();
             }
 
+            LOGGER.info("Agent response: {}", aiMessage.text());
+
+            // add last ai message to agent internal memory
             internalChatMemory.add(aiMessage);
             updateChatHistory(chatHistory, internalChatMemory);
         } catch (Exception e) {
@@ -70,7 +74,9 @@ public abstract class AbstractReActAgent implements Agent {
     }
 
     protected void updateChatHistory(List<ChatMessage> chatHistory, ChatMemory internalChatMemory) {
+        //delete extenal messages to avoid duplication
         chatHistory.clear();
+        //add previous history + agent internal messages
         internalChatMemory.messages()
             .stream()
             .filter(m -> !(m instanceof SystemMessage))
@@ -81,7 +87,9 @@ public abstract class AbstractReActAgent implements Agent {
         List<ToolExecutionResultMessage> toolExecutionResultMessages = new ArrayList<>();
         for (ToolExecutionRequest toolExecutionRequest : toolExecutionRequests) {
             var toolExecutor = getToolExecutor(toolExecutionRequest.name());
+            LOGGER.info("Executing {} with params {}", toolExecutionRequest.name(), toolExecutionRequest.arguments());
             String result = toolExecutor.execute(toolExecutionRequest, null);
+            LOGGER.info("Response from {}: {}", toolExecutionRequest.name(), result);
             if (result == null || result.isEmpty()) {
                 LOGGER.warn("Tool {} returned empty result but successfully completed. Setting result=ok.", toolExecutionRequest.name());
                 result = "ok";

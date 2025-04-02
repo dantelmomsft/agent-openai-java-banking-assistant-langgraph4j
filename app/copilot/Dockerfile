@@ -7,7 +7,9 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 COPY copilot-backend copilot-backend
-COPY semantickernel-openapi-plugin semantickernel-openapi-plugin
+COPY copilot-common copilot-common
+COPY langchain4j-agents langchain4j-agents
+COPY langchain4j-openapi langchain4j-openapi
 
 RUN chmod +x ./mvnw
 # Convert CRLF to LF

@@ -45,7 +45,6 @@
     <modules>
         <module>copilot-backend</module>
         <module>langchain4j-agents</module>
-		<module>langgraph4j-agents</module>
         <module>langchain4j-openapi</module>
         <module>copilot-common</module>
     </modules>

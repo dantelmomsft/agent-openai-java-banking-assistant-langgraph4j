@@ -87,14 +87,18 @@ public abstract class MCPToolAgent extends AbstractReActAgent {
             // try first the extended executors
             var toolExecutor = extendedExecutorMap.get(toolExecutionRequest.name());
             if( toolExecutor != null){
-                result = toolExecutor.execute(toolExecutionRequest,null);
+                LOGGER.info("Executing {} with params {}", toolExecutionRequest.name(), toolExecutionRequest.arguments());
+                 result = toolExecutor.execute(toolExecutionRequest,null);
+                LOGGER.info("Response from {}: {}", toolExecutionRequest.name(), result);
 
             }else{
                 var mcpClient = tool2ClientMap.get(toolExecutionRequest.name());
                 if (mcpClient == null) {
                     throw new IllegalArgumentException("No MCP executor found for tool name: " + toolExecutionRequest.name());
                 }
+                LOGGER.info("Executing {} with params {}", toolExecutionRequest.name(), toolExecutionRequest.arguments());
                 result =  mcpClient.executeTool(toolExecutionRequest);
+                LOGGER.info("Response from {}: {}", toolExecutionRequest.name(), result);
             }
 
             if (result == null || result.isEmpty()) {
