@@ -18,6 +18,7 @@ import dev.langchain4j.service.tool.ToolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,7 @@ public abstract class MCPToolAgent extends AbstractReActAgent {
                         .sseUrl(metadata.url())
                         .logRequests(true) // if you want to see the traffic in the log
                         .logResponses(true)
+                        .timeout(Duration.ofHours(3))
                         .build();
 
                 McpClient mcpClient = new DefaultMcpClient.Builder()

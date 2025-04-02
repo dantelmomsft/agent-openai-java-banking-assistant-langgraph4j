@@ -7,13 +7,15 @@ import com.azure.ai.openai.OpenAIClientBuilder;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.core.http.policy.HttpLogOptions;
+import dev.langchain4j.model.azure.AzureOpenAiChatModel;
+import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class OpenAIConfiguration {
+public class AzureOpenAIConfiguration {
 
     @Value("${openai.service}")
     String openAIServiceName;
@@ -23,7 +25,7 @@ public class OpenAIConfiguration {
 
     final TokenCredential tokenCredential;
 
-    public OpenAIConfiguration(TokenCredential tokenCredential) {
+    public AzureOpenAIConfiguration(TokenCredential tokenCredential) {
         this.tokenCredential = tokenCredential;
     }
 
@@ -41,6 +43,7 @@ public class OpenAIConfiguration {
                 .credential(tokenCredential)
                 .httpLogOptions(httpLogOptions)
                 .buildClient();
+
     }
 
     @Bean
