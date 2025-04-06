@@ -20,6 +20,13 @@
 	</properties>
 
 	<dependencies>
+
+		<dependency>
+			<groupId>com.microsoft.openai.samples.assistant</groupId>
+			<artifactId>langchain4j-agents</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.bsc.langgraph4j</groupId>
 			<artifactId>langgraph4j-core</artifactId>
@@ -63,11 +70,6 @@
 			<scope>compile</scope>
 		</dependency>
 
-        <dependency>
-            <groupId>com.microsoft.openai.samples.assistant</groupId>
-            <artifactId>langchain4j-openapi</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>

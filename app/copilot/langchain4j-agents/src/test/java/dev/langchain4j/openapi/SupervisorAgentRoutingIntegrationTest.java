@@ -4,15 +4,10 @@ import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
 import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
 import com.azure.identity.AzureCliCredentialBuilder;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.TransactionHistoryAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.*;
 import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 
 import java.util.ArrayList;
@@ -45,7 +40,7 @@ public class SupervisorAgentRoutingIntegrationTest {
                 "http://localhost:8070",
                 "http://localhost:8060");
 
-        var supervisorAgent = new SupervisorAgent(azureOpenAiChatModel, List.of(accountAgent,transactionHistoryAgent,paymentAgent));
+        var supervisorAgent = new SupervisorRoutingAgent(azureOpenAiChatModel, List.of(accountAgent,transactionHistoryAgent,paymentAgent));
         var chatHistory = new ArrayList<ChatMessage>();
 
 

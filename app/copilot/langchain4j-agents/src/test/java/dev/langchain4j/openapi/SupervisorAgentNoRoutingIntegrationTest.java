@@ -44,7 +44,7 @@ public class SupervisorAgentNoRoutingIntegrationTest {
                 "http://localhost:8070",
                 "http://localhost:8060");
 
-        var supervisorAgent = new SupervisorAgent(azureOpenAiChatModel, List.of(accountAgent,transactionHistoryAgent,paymentAgent), false);
+        var supervisorAgent = new SupervisorAgent(azureOpenAiChatModel, List.of(accountAgent,transactionHistoryAgent,paymentAgent) );
         var chatHistory = new ArrayList<ChatMessage>();
 
         chatHistory.add(UserMessage.from("How much money do I have in my account?"));

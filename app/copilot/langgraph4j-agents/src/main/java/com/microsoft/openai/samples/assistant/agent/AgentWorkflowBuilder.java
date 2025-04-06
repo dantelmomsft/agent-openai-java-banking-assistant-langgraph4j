@@ -1,6 +1,7 @@
 package com.microsoft.openai.samples.assistant.agent;
 
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import org.bsc.langgraph4j.CompileConfig;
@@ -33,12 +34,26 @@ public class AgentWorkflowBuilder {
                 .modelName("deepseek-r1:14b")
                 .build();
 
-        // var  memory = MessageWindowChatMemory.withMaxMessages(10);
-        var memory = MessageWindowChatMemory.withMaxMessages(10);
+        final var modelTools = OllamaChatModel.builder()
+                .baseUrl( "http://localhost:11434" )
+                .temperature(0.0)
+                .logRequests(true)
+                .logResponses(true)
+                .responseFormat( ResponseFormat.JSON )
+                .modelName("qwen2.5:7b")
+                .build();
+
+
+
+        var accountAgent = new AccountAgent( modelThinking,
+                "bob.user@contoso.com",
+                "http://localhost:8070" );
+
+        var superVisorAgent = new SupervisorAgent( modelTools,
+                    List.of( accountAgent )
+                 );
 
         var serializer = new StateSerializer();
-
-        AsyncNodeAction<AgentWorkflowState> transactionAgent = TransactionsReportingAgent.of( modelThinking, memory );
 
         AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state ->
             // remove intent from state
@@ -47,27 +62,30 @@ public class AgentWorkflowBuilder {
 
         AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) ->
                 state.intent().orElseGet( () ->
-                        state.clarification().map( c -> SupervisorAgent.Intent.User.name()).orElse(END) ));
+                        state.clarification().map( c -> Intent.User.name()).orElse(END) ));
+
 
         return new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
-                .addNode( "Supervisor", SupervisorAgent.of(modelThinking, memory) )
-                .addNode( SupervisorAgent.Intent.User.name(), userProxy )
-                .addNode( SupervisorAgent.Intent.AccountInfo.name(), AccountAgent.of( modelThinking, memory ) )
-                .addNode( SupervisorAgent.Intent.BillPayment.name(), PaymentAgent.of( modelThinking, memory ) )
-                .addNode( SupervisorAgent.Intent.TransactionHistory.name(), transactionAgent)
-                .addNode( SupervisorAgent.Intent.RepeatTransaction.name(), transactionAgent )
+                .addNode( "Supervisor", SupervisorAgentNode.of( superVisorAgent ) )
+                .addNode( Intent.User.name(), userProxy )
+                .addNode( Intent.AccountInfo.name(), AccountAgentNode.of( accountAgent ) )
+                //.addNode( Intent.BillPayment.name(), PaymentAgentNode.of( modelThinking ) )
+                //.addNode( Intent.TransactionHistory.name(), transactionAgent)
+                //.addNode( Intent.RepeatTransaction.name(), transactionAgent )
                 .addEdge(  START, "Supervisor" )
                 .addConditionalEdges( "Supervisor",
                         superVisorRoute,
                         EdgeMappings.builder()
-                                .to( SupervisorAgent.Intent.names() )
-                                //.toEND()
+                                //.to( Intent.names() )
+                                .to( Intent.AccountInfo.name() )
+                                .to( Intent.User.name() )
+                                .toEND()
                                 .build())
-                .addEdge( SupervisorAgent.Intent.User.name(), "Supervisor" )
-                .addEdge( SupervisorAgent.Intent.AccountInfo.name(), "Supervisor" )
-                .addEdge( SupervisorAgent.Intent.BillPayment.name(), "Supervisor" )
-                .addEdge( SupervisorAgent.Intent.TransactionHistory.name(), "Supervisor"  )
-                .addEdge( SupervisorAgent.Intent.RepeatTransaction.name(), "Supervisor" )
+                .addEdge( Intent.User.name(), "Supervisor" )
+                .addEdge( Intent.AccountInfo.name(), "Supervisor" )
+                //.addEdge( Intent.BillPayment.name(), "Supervisor" )
+                //.addEdge( Intent.TransactionHistory.name(), "Supervisor"  )
+                //.addEdge( Intent.RepeatTransaction.name(), "Supervisor" )
                 ;
     }
 
@@ -79,7 +97,7 @@ public class AgentWorkflowBuilder {
 
         var config = CompileConfig.builder()
                         .checkpointSaver( checkPointSaver )
-                        .interruptBefore( SupervisorAgent.Intent.User.name())
+                        .interruptBefore( Intent.User.name())
                         .build();
 
         return graph.compile(config);
