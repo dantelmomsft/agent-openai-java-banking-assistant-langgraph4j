@@ -7,7 +7,7 @@ public enum Intent {
     BillPayment,
     RepeatTransaction,
     TransactionHistory,
-    AccountInfo,
+    AccountAgent,
     User;
 
     /**

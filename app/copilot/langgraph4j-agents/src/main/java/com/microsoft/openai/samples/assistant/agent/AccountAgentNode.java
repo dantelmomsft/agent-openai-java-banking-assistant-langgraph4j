@@ -1,6 +1,7 @@
 package com.microsoft.openai.samples.assistant.agent;
 
 import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.slf4j.Logger;
@@ -12,15 +13,15 @@ import java.util.Objects;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public  class AccountAgentNode implements NodeAction<AgentWorkflowState> {
-
-    private final AccountAgent agent;
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountAgentNode.class);
 
-    public static AsyncNodeAction<AgentWorkflowState> of( AccountAgent agent ) {
+    private final AccountMCPAgent agent;
+
+    public static AsyncNodeAction<AgentWorkflowState> of( AccountMCPAgent agent ) {
         return node_async( new AccountAgentNode( agent ));
     }
 
-    public AccountAgentNode( AccountAgent agent ) {
+    public AccountAgentNode( AccountMCPAgent agent ) {
         this.agent = Objects.requireNonNull( agent, "agent cannot be null");
     }
 

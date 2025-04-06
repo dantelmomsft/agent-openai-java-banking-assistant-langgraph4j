@@ -12,10 +12,6 @@ import java.util.function.Supplier;
 
 public class AgentWorkflowState extends MessagesState<ChatMessage>  {
 
-    public static final Map<String, Channel<?>> SCHEMA = Map.of(
-            "messages", new MessagesChannel(ArrayList::new), // inherit schema
-            "memory", AppenderChannel.of(ArrayList::new));
-
     // Required by Jackson Serialization
     public AgentWorkflowState() {
         super( Map.of() );
@@ -23,14 +19,6 @@ public class AgentWorkflowState extends MessagesState<ChatMessage>  {
 
     public AgentWorkflowState(Map<String, Object> initData ) {
         super( initData );
-    }
-
-    public Optional<String> intent() {
-        return value("intent");
-    }
-
-    public Optional<String> clarification() {
-        return value("clarification");
     }
 
     /**

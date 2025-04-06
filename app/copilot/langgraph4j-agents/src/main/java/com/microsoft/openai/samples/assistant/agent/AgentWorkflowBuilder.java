@@ -2,8 +2,9 @@ package com.microsoft.openai.samples.assistant.agent;
 
 import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
-import dev.langchain4j.model.chat.request.ResponseFormat;
-import dev.langchain4j.model.ollama.OllamaChatModel;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphStateException;
@@ -16,7 +17,6 @@ import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;
 
-import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
@@ -25,6 +25,7 @@ public class AgentWorkflowBuilder {
 
     public StateGraph<AgentWorkflowState> stateGraph() throws GraphStateException {
 
+        /*
         final var modelThinking = OllamaChatModel.builder()
                 .baseUrl( "http://localhost:11434" )
                 .temperature(0.0)
@@ -42,14 +43,21 @@ public class AgentWorkflowBuilder {
                 .responseFormat( ResponseFormat.JSON )
                 .modelName("qwen2.5:7b")
                 .build();
+        */
 
+        var model = AzureOpenAiChatModel.builder()
+                .apiKey(System.getenv("AZURE_OPENAI_KEY"))
+                .endpoint(System.getenv("AZURE_OPENAI_ENDPOINT"))
+                .deploymentName(System.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"))
+                .temperature(0.3)
+                .logRequestsAndResponses(true)
+                .build();
 
-
-        var accountAgent = new AccountAgent( modelThinking,
+        var accountAgent = new AccountMCPAgent( model,
                 "bob.user@contoso.com",
                 "http://localhost:8070" );
 
-        var superVisorAgent = new SupervisorAgent( modelTools,
+        var superVisorAgent = new SupervisorAgent( model,
                     List.of( accountAgent )
                  );
 
@@ -60,15 +68,24 @@ public class AgentWorkflowBuilder {
             new HashMap<>() {{ put("intent", null ); }}
         );
 
-        AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) ->
-                state.intent().orElseGet( () ->
-                        state.clarification().map( c -> Intent.User.name()).orElse(END) ));
+        AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) -> {
+
+            var intent = state.lastMessage()
+                    .map( AiMessage.class::cast )
+                    .map( AiMessage::text )
+                    .orElseThrow();
+
+            return Intent.names().stream()
+                    .filter( i -> Objects.equals(i,intent ) )
+                    .findFirst()
+                    .orElse( Intent.User.name() );
+        });
 
 
         return new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgentNode.of( superVisorAgent ) )
                 .addNode( Intent.User.name(), userProxy )
-                .addNode( Intent.AccountInfo.name(), AccountAgentNode.of( accountAgent ) )
+                .addNode( Intent.AccountAgent.name(), AccountAgentNode.of( accountAgent ) )
                 //.addNode( Intent.BillPayment.name(), PaymentAgentNode.of( modelThinking ) )
                 //.addNode( Intent.TransactionHistory.name(), transactionAgent)
                 //.addNode( Intent.RepeatTransaction.name(), transactionAgent )
@@ -77,12 +94,12 @@ public class AgentWorkflowBuilder {
                         superVisorRoute,
                         EdgeMappings.builder()
                                 //.to( Intent.names() )
-                                .to( Intent.AccountInfo.name() )
+                                .to( Intent.AccountAgent.name() )
                                 .to( Intent.User.name() )
                                 .toEND()
                                 .build())
                 .addEdge( Intent.User.name(), "Supervisor" )
-                .addEdge( Intent.AccountInfo.name(), "Supervisor" )
+                .addEdge( Intent.AccountAgent.name(), "Supervisor" )
                 //.addEdge( Intent.BillPayment.name(), "Supervisor" )
                 //.addEdge( Intent.TransactionHistory.name(), "Supervisor"  )
                 //.addEdge( Intent.RepeatTransaction.name(), "Supervisor" )

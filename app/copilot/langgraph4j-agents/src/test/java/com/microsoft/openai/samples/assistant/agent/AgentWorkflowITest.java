@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AgentWorkflowTest {
+public class AgentWorkflowITest {
     private static final Logger log = LoggerFactory.getLogger("Tests");
 
     @Test
@@ -38,8 +38,6 @@ public class AgentWorkflowTest {
         var state = workflow.invoke( Map.of( "messages", UserMessage.from( userRequest ) ));
 
         assertTrue( state.isPresent() );
-        //assertFalse( state.get().clarification().isPresent() );
-        assertTrue( state.get().intent().isPresent() );
         assertTrue( state.get().lastMessage().isPresent() );
 
         log.info( "\nresponse to User:\n{}",
@@ -66,11 +64,6 @@ public class AgentWorkflowTest {
         var state = workflow.invoke( Map.of( "messages", UserMessage.from(userRequest1)), runnableConfig);
 
         assertTrue( state.isPresent() );
-        assertEquals( Intent.User.name(), state.get().intent().get() );
-        assertTrue( state.get().clarification().isPresent() );
-
-        log.info( "\nresponse to User::\n{}",  state.flatMap(AgentWorkflowState::clarification).orElseThrow());
-
 
         var snapshot = workflow.getState(runnableConfig);
         assertEquals(Intent.User.name(), snapshot.next() );
@@ -90,9 +83,6 @@ public class AgentWorkflowTest {
         state = workflow.invoke( null, runnableConfig);
 
         assertTrue( state.isPresent() );
-        assertFalse( state.get().clarification().isPresent() );
-        assertTrue( state.get().intent().isPresent() );
-        assertEquals(Intent.User.name(), state.get().intent().get() );
         assertTrue( state.get().lastMessage().isPresent() );
 
         log.info( "\nresponse to User:\n{}",

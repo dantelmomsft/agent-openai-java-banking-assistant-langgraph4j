@@ -47,6 +47,12 @@
 
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-azure-open-ai</artifactId>
+			<version>${langchain4j.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-ollama</artifactId>
 			<version>${langchain4j.version}</version>
 		</dependency>
@@ -84,110 +90,17 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/*ITest.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+
 		</plugins>
 	</build>
-
-	<profiles>
-		<profile>
-			<id>bug-check</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<version>${maven.compiler-plugin.version}</version>
-						<configuration>
-							<source>${java.version}</source>
-							<target>${java.version}</target>
-							<release>${java.version}</release>
-							<encoding>${project.build.sourceEncoding}</encoding>
-							<showWarnings>true</showWarnings>
-							<compilerArgs>
-								<arg>-XDcompilePolicy=simple</arg>
-								<arg>-Xplugin:ErrorProne
-									-XepOpt:NullAway:AnnotatedPackages=com.microsoft.openai.samples.rag
-									-Xep:AlmostJavadoc:OFF -Xep:MissingSummary:OFF
-									-Xep:UnusedVariable:OFF -Xep:EmptyBlockTag:OFF
-								</arg>
-							</compilerArgs>
-							<annotationProcessorPaths>
-								<path>
-									<groupId>com.google.errorprone</groupId>
-									<artifactId>error_prone_core</artifactId>
-									<version>${google.errorprone.core.version}</version>
-								</path>
-								<path>
-									<groupId>com.uber.nullaway</groupId>
-									<artifactId>nullaway</artifactId>
-									<version>${com.uber.nullaway.version}</version>
-								</path>
-							</annotationProcessorPaths>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>com.diffplug.spotless</groupId>
-						<artifactId>spotless-maven-plugin</artifactId>
-						<version>${maven.spotless-plugin.version}</version>
-						<executions>
-							<execution>
-								<id>check</id>
-								<goals>
-									<goal>check</goal>
-								</goals>
-								<phase>compile</phase>
-							</execution>
-							<execution>
-								<id>apply</id>
-								<goals>
-									<goal>apply</goal>
-								</goals>
-								<phase>process-sources</phase>
-							</execution>
-						</executions>
-						<configuration>
-							<java>
-								<googleJavaFormat>
-									<version>${google.java.format.version}</version>
-									<style>AOSP</style>
-									<reflowLongStrings>true</reflowLongStrings>
-								</googleJavaFormat>
-								<licenseHeader>
-									<content>// Copyright (c) Microsoft. All rights reserved.</content>
-								</licenseHeader>
-								<toggleOffOn />
-							</java>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>com.github.spotbugs</groupId>
-						<artifactId>spotbugs-maven-plugin</artifactId>
-						<version>${maven.spotbugs-plugin.version}</version>
-						<configuration>
-							<excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
-							<effort>Max</effort>
-							<!-- Lower when more project is stable -->
-							<threshold>Normal</threshold>
-						</configuration>
-						<executions>
-							<execution>
-								<goals>
-									<goal>spotbugs</goal>
-									<goal>check</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<!-- Check compatibility with Android API -->
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>animal-sniffer-maven-plugin</artifactId>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 
 </project>
