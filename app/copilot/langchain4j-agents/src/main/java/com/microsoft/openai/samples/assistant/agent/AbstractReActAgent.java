@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractReActAgent implements Agent {
 
@@ -31,7 +32,7 @@ public abstract class AbstractReActAgent implements Agent {
     }
 
     @Override
-    public void invoke(List<ChatMessage> chatHistory) throws AgentExecutionException {
+    public List<ChatMessage> invoke(List<ChatMessage> chatHistory) throws AgentExecutionException {
         LOGGER.info("------------- {} -------------", this.getName());
 
         try {
@@ -63,7 +64,8 @@ public abstract class AbstractReActAgent implements Agent {
             }
 
             internalChatMemory.add(aiMessage);
-            updateChatHistory(chatHistory, internalChatMemory);
+            //updateChatHistory(chatHistory, internalChatMemory);
+            return internalChatMemory.messages();
         } catch (Exception e) {
             throw new AgentExecutionException("Error during agent [%s] invocation".formatted(this.getName()), e);
         }

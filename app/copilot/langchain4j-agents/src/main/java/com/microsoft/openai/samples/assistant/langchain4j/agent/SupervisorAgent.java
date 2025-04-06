@@ -25,11 +25,9 @@ public class SupervisorAgent {
 
     private final Logger LOGGER = LoggerFactory.getLogger(SupervisorAgent.class);
     private final ChatLanguageModel chatLanguageModel;
-    private final List<Agent> agents;
     private final Map<String, AgentMetadata> agentsMetadata;
     private final Prompt agentPrompt;
     //When false only detect the next agent but doesn't route to it. It will answer with the agent name.
-    private Boolean routing = true;
 
    private final String SUPERVISOR_AGENT_SINGLETURN_SYSTEM_MESSAGE = """
         You are a banking customer support agent triaging conversation and select the best agent name that can solve the customer need.
@@ -48,10 +46,8 @@ public class SupervisorAgent {
         if you are not able to select an intent answer with none.
         """;
 **/
-    public SupervisorAgent(ChatLanguageModel chatLanguageModel, List<Agent> agents, Boolean routing) {
+    public SupervisorAgent(ChatLanguageModel chatLanguageModel, List<Agent> agents ) {
         this.chatLanguageModel = chatLanguageModel;
-        this.agents = agents;
-        this.routing = routing;
 
         this.agentsMetadata = agents.stream()
                 .collect(Collectors.toMap(Agent::getName, Agent::getMetadata));
@@ -59,20 +55,10 @@ public class SupervisorAgent {
         PromptTemplate promptTemplate = PromptTemplate.from(SUPERVISOR_AGENT_SINGLETURN_SYSTEM_MESSAGE);
         agentPrompt =promptTemplate.apply(Map.of("agentsMetadata", this.agentsMetadata));
 
-        /** extract agent intents from agents metadata
-       String intents = agentsMetadata.values().stream()
-              .flatMap(agentMetadata -> agentMetadata.intents().stream())
-              .collect(Collectors.joining(","));
-
-       agentPrompt =promptTemplate.apply(Map.of("agentsIntents", intents));
-         **/
-    }
-    public SupervisorAgent(ChatLanguageModel chatLanguageModel, List<Agent> agents) {
-       this(chatLanguageModel, agents, true);
     }
 
 
-    public void invoke(List<ChatMessage> chatHistory) {
+    public List<ChatMessage> invoke(List<ChatMessage> chatHistory) {
         LOGGER.info("------------- SupervisorAgent -------------");
 
         var internalChatMemory = buildInternalChat(chatHistory);
@@ -82,42 +68,12 @@ public class SupervisorAgent {
                 .build();
 
         AiMessage aiMessage = chatLanguageModel.chat(request).aiMessage();
-        String nextAgent = aiMessage.text();
-        LOGGER.info("Supervisor Agent handoff to [{}]", nextAgent);
 
-     if (routing) {
-            singleTurnRouting(nextAgent, chatHistory);
-        }
+
+        return List.of( aiMessage );
     }
 
 
-    protected void singleTurnRouting(String nextAgent, List<ChatMessage> chatHistory) {
-        Agent agent = agents.stream()
-                .filter(a -> a.getName().equals(nextAgent))
-                .findFirst()
-                .orElseThrow(() -> new AgentExecutionException("Agent not found: " + nextAgent));
-
-        agent.invoke(chatHistory);
-    }
-
-    List<ChatMessage> getFewShotExamples(){
-
-        return new ArrayList<>();
-        /**
-        return List.of(
-            dev.langchain4j.data.message.UserMessage.from("can you buy stocks for me?"),
-            AiMessage.from("none"),
-            dev.langchain4j.data.message.UserMessage.from("do I have a credit card?"),
-            AiMessage.from("RetrieveAccountInfo"),
-            dev.langchain4j.data.message.UserMessage.from("can you pay this bill for me?"),
-            AiMessage.from("SubmitPayment"),
-            dev.langchain4j.data.message.UserMessage.from("when was last time I paid acme"),
-            AiMessage.from("GetTransactionDetails"),
-            dev.langchain4j.data.message.UserMessage.from("proceed with payment"),
-            AiMessage.from("SubmitPayment"));
-         **/
-
-    }
 
     private ChatMemory buildInternalChat(List<ChatMessage> chatHistory) {
         //build a new chat memory to preserve order of messages otherwise the model hallucinate.

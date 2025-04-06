@@ -66,14 +66,14 @@ public class AgentWorkflowTest {
         var state = workflow.invoke( Map.of( "messages", UserMessage.from(userRequest1)), runnableConfig);
 
         assertTrue( state.isPresent() );
-        assertEquals( SupervisorAgent.Intent.User.name(), state.get().intent().get() );
+        assertEquals( Intent.User.name(), state.get().intent().get() );
         assertTrue( state.get().clarification().isPresent() );
 
         log.info( "\nresponse to User::\n{}",  state.flatMap(AgentWorkflowState::clarification).orElseThrow());
 
 
         var snapshot = workflow.getState(runnableConfig);
-        assertEquals(SupervisorAgent.Intent.User.name(), snapshot.next() );
+        assertEquals(Intent.User.name(), snapshot.next() );
 
         var userRequest2 = "i need the infos from my account";
 
@@ -92,7 +92,7 @@ public class AgentWorkflowTest {
         assertTrue( state.isPresent() );
         assertFalse( state.get().clarification().isPresent() );
         assertTrue( state.get().intent().isPresent() );
-        assertEquals(SupervisorAgent.Intent.User.name(), state.get().intent().get() );
+        assertEquals(Intent.User.name(), state.get().intent().get() );
         assertTrue( state.get().lastMessage().isPresent() );
 
         log.info( "\nresponse to User:\n{}",

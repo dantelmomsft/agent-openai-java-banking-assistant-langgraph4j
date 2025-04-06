@@ -40,7 +40,7 @@ public class AgentWorkflowStudio {
                     .stateGraph( workflow )
                     .compileConfig( CompileConfig.builder()
                             .checkpointSaver( new MemorySaver() )
-                            .interruptAfter( SupervisorAgent.Intent.User.name())
+                            .interruptAfter( Intent.User.name())
                             .build())
                     .build();
 
