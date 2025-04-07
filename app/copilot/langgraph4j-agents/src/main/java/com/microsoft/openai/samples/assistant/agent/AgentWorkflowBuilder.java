@@ -1,8 +1,8 @@
 package com.microsoft.openai.samples.assistant.agent;
 
 import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 import org.bsc.langgraph4j.CompileConfig;
@@ -12,7 +12,8 @@ import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncEdgeAction;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
-import org.bsc.langgraph4j.langchain4j.serializer.jackson.JacksonMessagesStateSerializer;
+import org.bsc.langgraph4j.langchain4j.serializer.jackson.LC4jJacksonStateSerializer;
+import org.bsc.langgraph4j.state.RemoveByHash;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;
@@ -53,20 +54,19 @@ public class AgentWorkflowBuilder {
                 .logRequestsAndResponses(true)
                 .build();
 
-        var accountAgent = new AccountMCPAgent( model,
+        var accountAgent = new AccountAgent( model,
                 "bob.user@contoso.com",
                 "http://localhost:8070" );
 
-        var superVisorAgent = new SupervisorAgent( model,
-                    List.of( accountAgent )
-                 );
+        var superVisorAgent = new SupervisorAgent( model, List.of( accountAgent ) );
 
-        var serializer = new StateSerializer();
+        var serializer = new LC4jJacksonStateSerializer<>( AgentWorkflowState::new );
 
-        AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state ->
-            // remove intent from state
-            new HashMap<>() {{ put("intent", null ); }}
-        );
+        AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state -> {
+            // remove last message (ie the  intent ) from state
+            var lastMessage = state.lastMessage().orElseThrow();
+            return Map.of("messages", RemoveByHash.of(lastMessage) );
+        });
 
         AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) -> {
 
@@ -85,7 +85,7 @@ public class AgentWorkflowBuilder {
         return new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgentNode.of( superVisorAgent ) )
                 .addNode( Intent.User.name(), userProxy )
-                .addNode( Intent.AccountAgent.name(), AccountAgentNode.of( accountAgent ) )
+                .addNode( Intent.AccountAgent.name(), AgentNode.of( accountAgent ) )
                 //.addNode( Intent.BillPayment.name(), PaymentAgentNode.of( modelThinking ) )
                 //.addNode( Intent.TransactionHistory.name(), transactionAgent)
                 //.addNode( Intent.RepeatTransaction.name(), transactionAgent )
@@ -121,25 +121,4 @@ public class AgentWorkflowBuilder {
     }
 }
 
-
-
-class StateSerializer extends JacksonMessagesStateSerializer<AgentWorkflowState> {
-
-    public StateSerializer() {
-        super( AgentWorkflowState::new );
-    }
-}
-
-/*
-class StateSerializer extends ObjectStreamStateSerializer<AgentWorkflowState> {
-
-    public StateSerializer() {
-        super( AgentWorkflowState::new );
-
-        mapper().register(ToolExecutionRequest.class, new ToolExecutionRequestSerializer());
-        mapper().register(ChatMessage.class, new ChatMesssageSerializer());
-    }
-}
-
-*/
 
