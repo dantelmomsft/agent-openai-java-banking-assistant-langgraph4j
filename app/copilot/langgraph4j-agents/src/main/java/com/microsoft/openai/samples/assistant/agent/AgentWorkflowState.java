@@ -6,7 +6,6 @@ import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.state.AppenderChannel;
 import org.bsc.langgraph4j.state.Channel;
-import org.bsc.langgraph4j.state.Channels;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -14,7 +13,7 @@ import java.util.function.Supplier;
 public class AgentWorkflowState extends MessagesState<ChatMessage>  {
 
     public static final Map<String, Channel<?>> SCHEMA = Map.of(
-            "messages", new MessagesChannel(ArrayList::new)
+            "messages", new LC4JAppenderChannel(ArrayList::new)
     );
 
     // Required by Jackson Serialization
@@ -36,22 +35,22 @@ public class AgentWorkflowState extends MessagesState<ChatMessage>  {
 
 }
 
-class MessagesChannel extends AppenderChannel<ChatMessage> {
+class LC4JAppenderChannel extends AppenderChannel<ChatMessage> {
 
     /**
      * Constructs a new instance of {@code AppenderChannel} with the specified default provider.
      *
      * @param defaultProvider a supplier for the default list that will be used when no other list is available
      */
-    protected MessagesChannel(Supplier<List<ChatMessage>> defaultProvider) {
+    protected LC4JAppenderChannel(Supplier<List<ChatMessage>> defaultProvider) {
         super( new ReducerDisallowDuplicate<>(),  defaultProvider);
     }
 
     @Override
-    public Object update(String key, Object oldValue, Object newValue) {
-        if( newValue instanceof String userMessage ) {
-            return super.update(key, oldValue, UserMessage.from( userMessage ));
-        }
-        return super.update(key, oldValue, newValue);
+    protected List<ChatMessage> validateNewValues(List<?> list) {
+        var result = list.stream().map( v ->
+            ( v instanceof String text ) ? UserMessage.from( text ) : v )
+            .toList();
+        return super.validateNewValues(result);
     }
 }

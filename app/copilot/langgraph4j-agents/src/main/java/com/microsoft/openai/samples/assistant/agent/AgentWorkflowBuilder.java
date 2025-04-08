@@ -1,8 +1,7 @@
 package com.microsoft.openai.samples.assistant.agent;
 
-import com.microsoft.openai.samples.assistant.langchain4j.agent.AccountAgent;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 import org.bsc.langgraph4j.CompileConfig;
@@ -24,7 +23,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public class AgentWorkflowBuilder {
 
-    public StateGraph<AgentWorkflowState> stateGraph() throws GraphStateException {
+    public StateGraph<AgentWorkflowState> graph() throws GraphStateException {
 
         /*
         final var modelThinking = OllamaChatModel.builder()
@@ -54,9 +53,9 @@ public class AgentWorkflowBuilder {
                 .logRequestsAndResponses(true)
                 .build();
 
-        var accountAgent = new AccountAgent( model,
+        var accountAgent = new AccountMCPAgent( model,
                 "bob.user@contoso.com",
-                "http://localhost:8070" );
+                "http://localhost:8070/sse" );
 
         var superVisorAgent = new SupervisorAgent( model, List.of( accountAgent ) );
 
@@ -108,7 +107,7 @@ public class AgentWorkflowBuilder {
 
     public CompiledGraph<AgentWorkflowState> build() throws GraphStateException {
 
-        var graph = stateGraph();
+        var graph = graph();
 
         var checkPointSaver = new MemorySaver();
 

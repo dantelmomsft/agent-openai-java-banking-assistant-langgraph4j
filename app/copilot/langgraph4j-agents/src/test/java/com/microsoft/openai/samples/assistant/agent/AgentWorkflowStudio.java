@@ -32,7 +32,7 @@ public class AgentWorkflowStudio {
 
         private LangGraphFlow agentWorkflow() throws GraphStateException {
 
-            var workflow = new AgentWorkflowBuilder().stateGraph();
+            var workflow = new AgentWorkflowBuilder().graph();
 
             return  LangGraphFlow.builder()
                     .title("LangGraph Studio (Sample)")
@@ -40,7 +40,7 @@ public class AgentWorkflowStudio {
                     .stateGraph( workflow )
                     .compileConfig( CompileConfig.builder()
                             .checkpointSaver( new MemorySaver() )
-                            .interruptAfter( Intent.User.name())
+                            .interruptBefore( Intent.User.name())
                             .build())
                     .build();
 
