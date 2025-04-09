@@ -4,11 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum Intent {
-    BillPayment,
-    RepeatTransaction,
-    TransactionHistory,
+    TransactionHistoryAgent,
     AccountAgent,
-    User;
+    PaymentAgent;
 
     /**
      * Returns a list of all possible names of the {@code Intent} enum constants.

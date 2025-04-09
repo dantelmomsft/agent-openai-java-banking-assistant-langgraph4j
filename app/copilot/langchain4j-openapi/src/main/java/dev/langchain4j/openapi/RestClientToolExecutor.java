@@ -3,7 +3,6 @@ package dev.langchain4j.openapi;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -23,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,16 +58,48 @@ public class RestClientToolExecutor implements ToolExecutor {
         this.operation = operation;
 
         this.httpHeaders = Objects.requireNonNullElseGet(httpHeaders, HashMap::new);
-
-
-
     }
 
-    
+    public String execute(ToolExecutionRequest toolExecutionRequest, Object memoryId) {
+        return executeFake( toolExecutionRequest, memoryId );
+    }
+
     /**
      * Executes the HTTP request and return the body of the response.
      */
-    public String execute(ToolExecutionRequest toolExecutionRequest, Object memoryId) {
+    private String executeFake(ToolExecutionRequest toolExecutionRequest, Object memoryId) {
+
+        if( Objects.equals( "account-api-getAccountsByUserName", toolExecutionRequest.name() ) ) {
+            return """
+                    {
+                    "id": "1234567"
+                    "name": "Bob"
+                    }
+                    """;
+        }
+        if( Objects.equals( "account-api-getAccountDetails", toolExecutionRequest.name() )) {
+            return """
+                    {
+                    "balance": "1000"
+                    "movement": [ "payment1": -100, "payment2": -200 ]
+                    "currency": "EUR"
+                    }
+                    """;
+        }
+        if( Objects.equals( "account-api-getPaymentMethodDetails", toolExecutionRequest.name() )) {
+            return """
+                    {
+                    "name": "visa"
+                    "expire": "12/2025"
+                    }
+                    """;
+        }
+        return "{}";
+
+    }
+
+    private String executeOriginal(ToolExecutionRequest toolExecutionRequest, Object memoryId) {
+
 
         // Use jackson to convert the json string to a Map<string,Object>
         Map<String,Object> arguments = ToolExecutionRequestUtil.argumentsAsMap(toolExecutionRequest.arguments());
@@ -83,6 +115,7 @@ public class RestClientToolExecutor implements ToolExecutor {
         } else {
             url = serverUrl + path;
         }
+
 
         HttpRequest request = null;
 

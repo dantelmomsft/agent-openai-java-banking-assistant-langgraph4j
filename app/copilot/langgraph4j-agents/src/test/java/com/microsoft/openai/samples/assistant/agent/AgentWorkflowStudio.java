@@ -1,5 +1,6 @@
 package com.microsoft.openai.samples.assistant.agent;
 
+import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
@@ -8,6 +9,8 @@ import org.bsc.langgraph4j.studio.springboot.LangGraphFlow;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Objects;
 
 public class AgentWorkflowStudio {
 
@@ -35,12 +38,11 @@ public class AgentWorkflowStudio {
             var workflow = new AgentWorkflowBuilder().graph();
 
             return  LangGraphFlow.builder()
-                    .title("LangGraph Studio (Sample)")
-                    .addInputStringArg( "messages" )
+                    .title("LangGraph Studio (Banking Assistant)")
+                    .addInputStringArg( "messages", true, v -> UserMessage.from( Objects.toString(v) ) )
                     .stateGraph( workflow )
                     .compileConfig( CompileConfig.builder()
                             .checkpointSaver( new MemorySaver() )
-                            .interruptBefore( Intent.User.name())
                             .build())
                     .build();
 

@@ -1,7 +1,15 @@
 package com.microsoft.openai.samples.assistant.agent;
 
+import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
+import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
+import com.azure.identity.AzureCliCredentialBuilder;
+import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.PaymentMCPAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.TransactionHistoryMCPAgent;
+import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 import org.bsc.langgraph4j.CompileConfig;
@@ -23,27 +31,20 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public class AgentWorkflowBuilder {
 
+    public DocumentIntelligenceInvoiceScanHelper documentInvoiceScanner() {
+        var  storageAccountService = "https://%s.blob.core.windows.net".formatted(System.getenv("AZURE_STORAGE_ACCOUNT"));
+        var containerName = "content";
+
+        return new DocumentIntelligenceInvoiceScanHelper(
+                        new DocumentIntelligenceClientBuilder()
+                                .endpoint("https://endpoint.cognitiveservices.azure.com")
+                                .buildClient(),
+                        new BlobStorageProxy( storageAccountService, containerName,
+                                new AzureCliCredentialBuilder().build() ) );
+
+    }
+
     public StateGraph<AgentWorkflowState> graph() throws GraphStateException {
-
-        /*
-        final var modelThinking = OllamaChatModel.builder()
-                .baseUrl( "http://localhost:11434" )
-                .temperature(0.0)
-                .logRequests(true)
-                .logResponses(true)
-                .responseFormat( ResponseFormat.JSON )
-                .modelName("deepseek-r1:14b")
-                .build();
-
-        final var modelTools = OllamaChatModel.builder()
-                .baseUrl( "http://localhost:11434" )
-                .temperature(0.0)
-                .logRequests(true)
-                .logResponses(true)
-                .responseFormat( ResponseFormat.JSON )
-                .modelName("qwen2.5:7b")
-                .build();
-        */
 
         var model = AzureOpenAiChatModel.builder()
                 .apiKey(System.getenv("AZURE_OPENAI_KEY"))
@@ -53,19 +54,23 @@ public class AgentWorkflowBuilder {
                 .logRequestsAndResponses(true)
                 .build();
 
-        var accountAgent = new AccountMCPAgent( model,
-                "bob.user@contoso.com",
-                "http://localhost:8070/sse" );
+        var accountUserName = "bob.user@contoso.com";
+        var paymentMCPServerUrl = "http://localhost:8060/sse";
+        var accountMCPServerUrl = "http://localhost:8070/sse";
+        var transactionMCPServerUrl = "http://localhost:8090/sse";
 
-        var superVisorAgent = new SupervisorAgent( model, List.of( accountAgent ) );
+        var accountAgent = new AccountMCPAgent( model, accountUserName, accountMCPServerUrl );
 
-        var serializer = new LC4jJacksonStateSerializer<>( AgentWorkflowState::new );
+        var transactionAgent = new TransactionHistoryMCPAgent( model, accountUserName, transactionMCPServerUrl, accountMCPServerUrl );
 
-        AsyncNodeAction<AgentWorkflowState> userProxy = node_async(state -> {
-            // remove last message (ie the  intent ) from state
-            var lastMessage = state.lastMessage().orElseThrow();
-            return Map.of("messages", RemoveByHash.of(lastMessage) );
-        });
+        var paymentAgent = new PaymentMCPAgent(model,
+                documentInvoiceScanner(),
+                accountUserName,
+                transactionMCPServerUrl,
+                accountMCPServerUrl,
+                paymentMCPServerUrl);
+
+        var superVisorAgent = new SupervisorAgent( model, List.of( accountAgent, transactionAgent, paymentAgent ) );
 
         AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) -> {
 
@@ -77,31 +82,26 @@ public class AgentWorkflowBuilder {
             return Intent.names().stream()
                     .filter( i -> Objects.equals(i,intent ) )
                     .findFirst()
-                    .orElse( Intent.User.name() );
+                    .orElse( "end" );
         });
 
+        var serializer = new LC4jJacksonStateSerializer<>( AgentWorkflowState::new );
 
         return new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
                 .addNode( "Supervisor", SupervisorAgentNode.of( superVisorAgent ) )
-                .addNode( Intent.User.name(), userProxy )
                 .addNode( Intent.AccountAgent.name(), AgentNode.of( accountAgent ) )
-                //.addNode( Intent.BillPayment.name(), PaymentAgentNode.of( modelThinking ) )
-                //.addNode( Intent.TransactionHistory.name(), transactionAgent)
-                //.addNode( Intent.RepeatTransaction.name(), transactionAgent )
+                .addNode( Intent.TransactionHistoryAgent.name(), AgentNode.of(  transactionAgent ) )
+                .addNode( Intent.PaymentAgent.name(), AgentNode.of( paymentAgent ) )
                 .addEdge(  START, "Supervisor" )
                 .addConditionalEdges( "Supervisor",
                         superVisorRoute,
                         EdgeMappings.builder()
-                                //.to( Intent.names() )
-                                .to( Intent.AccountAgent.name() )
-                                .to( Intent.User.name() )
-                                .toEND()
+                                .to( Intent.names() )
+                                .toEND("end")
                                 .build())
-                .addEdge( Intent.User.name(), "Supervisor" )
                 .addEdge( Intent.AccountAgent.name(), "Supervisor" )
-                //.addEdge( Intent.BillPayment.name(), "Supervisor" )
-                //.addEdge( Intent.TransactionHistory.name(), "Supervisor"  )
-                //.addEdge( Intent.RepeatTransaction.name(), "Supervisor" )
+                .addEdge( Intent.TransactionHistoryAgent.name(), "Supervisor"  )
+                .addEdge( Intent.PaymentAgent.name(), "Supervisor" )
                 ;
     }
 
@@ -113,7 +113,6 @@ public class AgentWorkflowBuilder {
 
         var config = CompileConfig.builder()
                         .checkpointSaver( checkPointSaver )
-                        .interruptBefore( Intent.User.name())
                         .build();
 
         return graph.compile(config);

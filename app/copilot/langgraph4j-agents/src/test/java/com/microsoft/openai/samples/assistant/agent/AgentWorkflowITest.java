@@ -47,49 +47,4 @@ public class AgentWorkflowITest {
                         .orElseThrow());
 
     }
-
-    @Test
-    public void testWorkflow02() throws Exception {
-
-        var workflow = new AgentWorkflowBuilder().build();
-
-        var runnableConfig =  RunnableConfig.builder()
-                .threadId("conversation-1" )
-                .build();
-
-        var userRequest1 = "Hello i'm a bartolomeo";
-
-        log.info( "\nrequest by User:\n{}",userRequest1 );
-
-        var state = workflow.invoke( Map.of( "messages", UserMessage.from(userRequest1)), runnableConfig);
-
-        assertTrue( state.isPresent() );
-
-        var snapshot = workflow.getState(runnableConfig);
-        assertEquals(Intent.User.name(), snapshot.next() );
-
-        var userRequest2 = "i need the infos from my account";
-
-        log.info( "\nrequest by User:\n{}",userRequest2 );
-
-        var partialState = new HashMap<String,Object>() {{
-            put( "messages", UserMessage.from(userRequest2) );
-            put( "clarification", null); // remove from state
-            put( "intent", null); // remove from state
-        }};
-
-        runnableConfig = workflow.updateState( runnableConfig, partialState);
-
-        state = workflow.invoke( null, runnableConfig);
-
-        assertTrue( state.isPresent() );
-        assertTrue( state.get().lastMessage().isPresent() );
-
-        log.info( "\nresponse to User:\n{}",
-                state.get().lastMessage()
-                        .map(AiMessage.class::cast)
-                        .map(AiMessage::text)
-                        .orElseThrow());
-
-    }
 }

@@ -28,8 +28,6 @@ public  class AgentNode<A extends Agent> implements NodeAction<AgentWorkflowStat
 
         var messages = agent.invoke( state.messages() );
 
-        return Map.of( "messages", messages, // result from reasoning
-                "intent", Intent.User.name() // force intent
-        );
+        return Map.of( "messages", messages );
     }
 }
