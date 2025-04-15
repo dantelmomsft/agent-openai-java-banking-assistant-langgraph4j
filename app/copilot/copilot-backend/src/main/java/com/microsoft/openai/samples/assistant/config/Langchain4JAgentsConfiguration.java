@@ -9,13 +9,15 @@ import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.TransactionH
 import com.microsoft.openai.samples.assistant.security.LoggedUserService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
 @Configuration
-public class MCPAgentsConfiguration {
+@ConditionalOnProperty(name = "agent.strategy", havingValue = "langchain4j", matchIfMissing = true)
+public class Langchain4JAgentsConfiguration {
     @Value("${transactions.api.url}") String transactionsMCPServerUrl;
     @Value("${accounts.api.url}") String accountsMCPServerUrl;
     @Value("${payments.api.url}") String paymentsMCPServerUrl;
@@ -24,7 +26,7 @@ public class MCPAgentsConfiguration {
     private final LoggedUserService loggedUserService;
     private final DocumentIntelligenceInvoiceScanHelper documentIntelligenceInvoiceScanHelper;
 
-    public MCPAgentsConfiguration(ChatLanguageModel chatLanguageModel, LoggedUserService loggedUserService, DocumentIntelligenceInvoiceScanHelper documentIntelligenceInvoiceScanHelper) {
+    public Langchain4JAgentsConfiguration(ChatLanguageModel chatLanguageModel, LoggedUserService loggedUserService, DocumentIntelligenceInvoiceScanHelper documentIntelligenceInvoiceScanHelper) {
         this.chatLanguageModel = chatLanguageModel;
         this.loggedUserService = loggedUserService;
         this.documentIntelligenceInvoiceScanHelper = documentIntelligenceInvoiceScanHelper;

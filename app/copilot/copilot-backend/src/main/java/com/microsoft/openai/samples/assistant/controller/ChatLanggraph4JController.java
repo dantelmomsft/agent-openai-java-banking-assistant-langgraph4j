@@ -1,30 +1,37 @@
 // Copyright (c) Microsoft. All rights reserved.
 package com.microsoft.openai.samples.assistant.controller;
 
-import com.microsoft.openai.samples.assistant.agent.*;
 
-
-import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
-
+import com.microsoft.openai.samples.assistant.agent.AgentWorkflowState;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.UserMessage;
+import org.bsc.langgraph4j.CompiledGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 @RestController
-public class ChatController {
+@ConditionalOnProperty(name = "agent.strategy", havingValue = "langgraph4j")
+public class ChatLanggraph4JController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
-    private final RouterAgent agentRouter;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatLanggraph4JController.class);
+    private final CompiledGraph<AgentWorkflowState> langgraph4jWorflow;
 
-    public ChatController(RouterAgent agentRouter){
-        this.agentRouter = agentRouter;
+    public ChatLanggraph4JController(CompiledGraph<AgentWorkflowState> langgraph4jWorflow){
+        this.langgraph4jWorflow = langgraph4jWorflow;
     }
 
 
@@ -45,37 +52,35 @@ public class ChatController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
 
-        ChatHistory chatHistory = convertSKChatHistory(chatRequest);
+        List<ChatMessage> chatHistory = convertToLangchain4j(chatRequest);
 
 
-        LOGGER.debug("Processing chat conversation..", chatHistory.getLastMessage().get().getContent());
+        LOGGER.debug("Processing chat conversation..", chatHistory.get(chatHistory.size()-1));
 
-        var agentContext = new AgentContext();
-        agentContext.put("requestContext", chatRequest.context());
-        agentContext.put("attachments", chatRequest.attachments());
-        agentContext.put("approach", chatRequest.approach());
+        var state = langgraph4jWorflow.invoke(Map.of("messages", chatHistory));
 
-        agentRouter.run(chatHistory,agentContext);
+        AiMessage generatedResponse = state.get().lastMessage()
+                .map(AiMessage.class::cast)
+                .orElseThrow();
+
 
         return ResponseEntity.ok(
-                ChatResponse.buildChatResponse(chatHistory, agentContext));
+                ChatResponse.buildChatResponse(generatedResponse));
     }
 
-    private ChatHistory convertSKChatHistory(ChatAppRequest chatAppRequest) {
-       ChatHistory chatHistory = new ChatHistory();
+    private List<ChatMessage> convertToLangchain4j(ChatAppRequest chatAppRequest) {
+       List<ChatMessage> chatHistory = new ArrayList<>();
          chatAppRequest.messages().forEach(
                historyChat -> {
                    if("user".equals(historyChat.role())) {
                      if(historyChat.attachments() == null || historyChat.attachments().isEmpty())
-                         chatHistory.addUserMessage(historyChat.content());
+                         chatHistory.add(UserMessage.from(historyChat.content()));
                      else
-                         chatHistory.addUserMessage(historyChat.content() + " " + historyChat.attachments().toString());
+                         chatHistory.add(UserMessage.from(historyChat.content() + " " + historyChat.attachments().toString()));
                    }
                    if("assistant".equals(historyChat.role()))
-                   chatHistory.addAssistantMessage(historyChat.content());
+                   chatHistory.add(AiMessage.from(historyChat.content()));
                });
-       //-chatHistory.addUserMessage(lastUserMessage.getContent());
-
        return chatHistory;
 
     }

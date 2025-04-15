@@ -8,6 +8,7 @@ import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,12 +22,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-public class ChatMCPController {
+@ConditionalOnProperty(name = "agent.strategy", havingValue = "langchain4j", matchIfMissing = true)
+public class ChatController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChatMCPController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
     private final SupervisorAgent supervisorAgent;
 
-    public ChatMCPController(SupervisorAgent supervisorAgent){
+    public ChatController(SupervisorAgent supervisorAgent){
         this.supervisorAgent = supervisorAgent;
     }
 
