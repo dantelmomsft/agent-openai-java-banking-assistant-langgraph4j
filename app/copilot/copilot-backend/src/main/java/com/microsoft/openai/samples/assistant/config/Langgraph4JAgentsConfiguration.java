@@ -18,7 +18,6 @@ import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncEdgeAction;
-import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.langchain4j.serializer.jackson.LC4jJacksonStateSerializer;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 import java.util.Objects;
 
+import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 
@@ -89,15 +89,15 @@ public class Langgraph4JAgentsConfiguration {
                                 .to( Intent.names() )
                                 .toEND("end")
                                 .build())
-                .addEdge( Intent.AccountAgent.name(), "Supervisor" )
-                .addEdge( Intent.TransactionHistoryAgent.name(), "Supervisor"  )
-                .addEdge( Intent.PaymentAgent.name(), "Supervisor" )
+                .addEdge( Intent.AccountAgent.name(), END )
+                .addEdge( Intent.TransactionHistoryAgent.name(), END  )
+                .addEdge( Intent.PaymentAgent.name(), END )
         ;
 
-        var checkPointSaver = new MemorySaver();
+        // var checkPointSaver = new MemorySaver();
 
         var config = CompileConfig.builder()
-                .checkpointSaver( checkPointSaver )
+                //.checkpointSaver( checkPointSaver )
                 .build();
 
         return graph.compile(config);
