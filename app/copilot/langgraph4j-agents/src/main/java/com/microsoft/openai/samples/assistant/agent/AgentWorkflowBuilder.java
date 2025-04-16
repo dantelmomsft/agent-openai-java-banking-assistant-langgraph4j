@@ -25,6 +25,7 @@ import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;
 
+import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
@@ -99,9 +100,9 @@ public class AgentWorkflowBuilder {
                                 .to( Intent.names() )
                                 .toEND("end")
                                 .build())
-                .addEdge( Intent.AccountAgent.name(), "Supervisor" )
-                .addEdge( Intent.TransactionHistoryAgent.name(), "Supervisor"  )
-                .addEdge( Intent.PaymentAgent.name(), "Supervisor" )
+                .addEdge( Intent.AccountAgent.name(), END )
+                .addEdge( Intent.TransactionHistoryAgent.name(), END  )
+                .addEdge( Intent.PaymentAgent.name(), END )
                 ;
     }
 
