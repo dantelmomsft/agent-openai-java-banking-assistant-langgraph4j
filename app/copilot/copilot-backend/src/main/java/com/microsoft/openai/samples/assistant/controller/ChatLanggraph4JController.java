@@ -2,11 +2,12 @@
 package com.microsoft.openai.samples.assistant.controller;
 
 
-import com.microsoft.openai.samples.assistant.AgentWorkflowState;
+import com.microsoft.openai.samples.assistant.langgraph4j.AgentWorkflowState;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.CompiledGraph;
+import org.bsc.langgraph4j.RunnableConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -21,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @ConditionalOnProperty(name = "agent.strategy", havingValue = "langgraph4j")
@@ -54,10 +56,19 @@ public class ChatLanggraph4JController {
         List<ChatMessage> chatHistory = convertToLangchain4j(chatRequest);
 
 
-        LOGGER.debug("Processing chat conversation..", chatHistory.get(chatHistory.size()-1));
+        //It contains only the last user message
+        LOGGER.debug("Processing user message..", chatHistory.get(chatHistory.size()-1));
 
-        
-        var state = langgraph4jWorflow.invoke(Map.of("messages", chatHistory));
+        String threadId = chatRequest.threadId();
+        if(chatRequest.threadId() == null || chatRequest.threadId().isEmpty()){
+            threadId = UUID.randomUUID().toString();
+        }
+
+        RunnableConfig config = RunnableConfig.builder()
+                .threadId(threadId)
+                .build();
+
+        var state = langgraph4jWorflow.invoke(Map.of("messages", chatHistory),config);
 
         AiMessage generatedResponse = state.get().lastMessage()
                 .map(AiMessage.class::cast)
@@ -65,7 +76,7 @@ public class ChatLanggraph4JController {
 
 
         return ResponseEntity.ok(
-                ChatResponse.buildChatResponse(generatedResponse));
+                ChatResponse.buildChatResponse(generatedResponse,threadId));
     }
 
     private List<ChatMessage> convertToLangchain4j(ChatAppRequest chatAppRequest) {

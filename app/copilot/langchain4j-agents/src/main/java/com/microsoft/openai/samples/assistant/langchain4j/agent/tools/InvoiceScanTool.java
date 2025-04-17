@@ -1,11 +1,9 @@
-package com.microsoft.openai.samples.assistant.langchain4j.tools;
+package com.microsoft.openai.samples.assistant.langchain4j.agent.tools;
 
 
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.service.tool.ToolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

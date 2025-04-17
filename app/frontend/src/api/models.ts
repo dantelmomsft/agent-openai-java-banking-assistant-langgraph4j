@@ -56,6 +56,7 @@ export type ChatAppResponseOrError = {
 
 export type ChatAppResponse = {
     choices: ResponseChoice[];
+    threadId?: string; // Added threadId field
 };
 
 export type ChatAppRequestContext = {
@@ -68,4 +69,5 @@ export type ChatAppRequest = {
     context?: ChatAppRequestContext;
     stream?: boolean;
     session_state: any;
+    threadId?: string; // Added threadId field
 };

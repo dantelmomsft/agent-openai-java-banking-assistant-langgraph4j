@@ -2,7 +2,8 @@
 package com.microsoft.openai.samples.assistant.controller;
 
 
-import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorRoutingAgent;
+import com.microsoft.openai.samples.assistant.langgraph4j.SupervisorAgent;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -20,16 +21,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @ConditionalOnProperty(name = "agent.strategy", havingValue = "langchain4j", matchIfMissing = true)
 public class ChatController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatController.class);
-    private final SupervisorAgent supervisorAgent;
+    private final SupervisorRoutingAgent supervisorRoutingAgent;
 
-    public ChatController(SupervisorAgent supervisorAgent){
-        this.supervisorAgent = supervisorAgent;
+    public ChatController(SupervisorRoutingAgent supervisorRoutingAgent){
+        this.supervisorRoutingAgent = supervisorRoutingAgent;
     }
 
 
@@ -55,11 +57,11 @@ public class ChatController {
 
         LOGGER.debug("Processing chat conversation..", chatHistory.get(chatHistory.size()-1));
 
-        supervisorAgent.invoke(chatHistory);
+        List<ChatMessage> agentsResponse = supervisorRoutingAgent.invoke(chatHistory);
 
-        AiMessage generatedResponse = (AiMessage) chatHistory.get(chatHistory.size()-1);
+        AiMessage generatedResponse = (AiMessage) agentsResponse.get(agentsResponse.size()-1);
         return ResponseEntity.ok(
-                ChatResponse.buildChatResponse(generatedResponse));
+                ChatResponse.buildChatResponse(generatedResponse, UUID.randomUUID().toString()));
     }
 
     private List<ChatMessage> convertToLangchain4j(ChatAppRequest chatAppRequest) {

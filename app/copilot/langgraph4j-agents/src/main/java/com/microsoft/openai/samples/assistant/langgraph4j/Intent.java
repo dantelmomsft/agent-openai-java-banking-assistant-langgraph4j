@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant;
+package com.microsoft.openai.samples.assistant.langgraph4j;
 
 import java.util.Arrays;
 import java.util.List;

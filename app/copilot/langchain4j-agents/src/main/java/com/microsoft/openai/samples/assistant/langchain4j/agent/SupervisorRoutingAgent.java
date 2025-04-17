@@ -15,14 +15,13 @@ import dev.langchain4j.model.input.PromptTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SupervisorRoutingAgent {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(SupervisorAgent.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(SupervisorRoutingAgent.class);
     private final ChatLanguageModel chatLanguageModel;
     private final List<Agent> agents;
     private final Map<String, AgentMetadata> agentsMetadata;
@@ -36,16 +35,7 @@ public class SupervisorRoutingAgent {
         Answer only with the agent name.
         if you are not able to select an agent answer with none.
         """;
-    /**
-     private final String SUPERVISOR_AGENT_SYSTEM_MESSAGE = """
-     You are a banking customer support agent who help bank customers manage their banking accounts and services.
-     Based on the conversation you need to extracting the user intent.
-     The available intents are:
-     {{agentsIntents}}
-     Answer only with the intent.
-     if you are not able to select an intent answer with none.
-     """;
-     **/
+
     public SupervisorRoutingAgent(ChatLanguageModel chatLanguageModel, List<Agent> agents ) {
         this.chatLanguageModel = chatLanguageModel;
         this.agents = agents;
@@ -59,7 +49,7 @@ public class SupervisorRoutingAgent {
     }
 
 
-    public void invoke(List<ChatMessage> chatHistory) {
+    public List<ChatMessage> invoke(List<ChatMessage> chatHistory) {
         LOGGER.info("------------- SupervisorAgent -------------");
 
         var internalChatMemory = buildInternalChat(chatHistory);
@@ -73,37 +63,28 @@ public class SupervisorRoutingAgent {
         String nextAgent = aiMessage.text();
         LOGGER.info("Supervisor Agent handoff to [{}]", nextAgent);
 
-        singleTurnRouting(nextAgent, chatHistory);
+        return singleTurnRouting(nextAgent, chatHistory);
 
     }
 
 
-    protected void singleTurnRouting(String nextAgent, List<ChatMessage> chatHistory) {
+    protected List<ChatMessage> singleTurnRouting(String nextAgent, List<ChatMessage> chatHistory) {
+
+            if("none".equalsIgnoreCase(nextAgent)){
+                LOGGER.info("Gracefully handle clarification.. ");
+                AiMessage clarificationMessage = AiMessage.builder().
+                        text(" I'm not sure about your request. Can you please clarify?")
+                        .build();
+                chatHistory.add(clarificationMessage);
+                return chatHistory;
+            }
+
         Agent agent = agents.stream()
                 .filter(a -> a.getName().equals(nextAgent))
                 .findFirst()
                 .orElseThrow(() -> new AgentExecutionException("Agent not found: " + nextAgent));
 
-        agent.invoke(chatHistory);
-    }
-
-    List<ChatMessage> getFewShotExamples(){
-
-        return new ArrayList<>();
-        /**
-         return List.of(
-         dev.langchain4j.data.message.UserMessage.from("can you buy stocks for me?"),
-         AiMessage.from("none"),
-         dev.langchain4j.data.message.UserMessage.from("do I have a credit card?"),
-         AiMessage.from("RetrieveAccountInfo"),
-         dev.langchain4j.data.message.UserMessage.from("can you pay this bill for me?"),
-         AiMessage.from("SubmitPayment"),
-         dev.langchain4j.data.message.UserMessage.from("when was last time I paid acme"),
-         AiMessage.from("GetTransactionDetails"),
-         dev.langchain4j.data.message.UserMessage.from("proceed with payment"),
-         AiMessage.from("SubmitPayment"));
-         **/
-
+        return agent.invoke(chatHistory);
     }
 
     private ChatMemory buildInternalChat(List<ChatMessage> chatHistory) {

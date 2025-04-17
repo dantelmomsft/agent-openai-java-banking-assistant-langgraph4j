@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.langchain4j.agent;
+package com.microsoft.openai.samples.assistant.langchain4j.agent.openapi;
 
 import com.microsoft.langchain4j.agent.AgentMetadata;
 import com.microsoft.langchain4j.agent.openapi.OpenAPIImporterMetadata;

@@ -1,11 +1,11 @@
-package com.microsoft.openai.samples.assistant.langchain4j.agent;
+package com.microsoft.openai.samples.assistant.langchain4j.agent.openapi;
 
 import com.microsoft.langchain4j.agent.AgentExecutionException;
 import com.microsoft.langchain4j.agent.openapi.OpenAPIImporterMetadata;
 import com.microsoft.langchain4j.agent.openapi.OpenAPIToolAgent;
 import com.microsoft.langchain4j.agent.AgentMetadata;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
-import com.microsoft.openai.samples.assistant.langchain4j.tools.InvoiceScanTool;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.tools.InvoiceScanTool;
 
 import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.model.chat.ChatLanguageModel;

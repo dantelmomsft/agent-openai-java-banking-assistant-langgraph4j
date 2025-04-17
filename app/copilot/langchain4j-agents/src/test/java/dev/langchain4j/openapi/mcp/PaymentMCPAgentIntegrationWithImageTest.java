@@ -4,7 +4,7 @@ import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
 import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
 import com.azure.identity.AzureCliCredentialBuilder;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.openapi.PaymentAgent;
 import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;

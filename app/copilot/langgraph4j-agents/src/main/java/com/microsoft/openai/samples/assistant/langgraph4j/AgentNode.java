@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant;
+package com.microsoft.openai.samples.assistant.langgraph4j;
 
 import com.microsoft.langchain4j.agent.Agent;
 import org.bsc.langgraph4j.action.AsyncNodeAction;

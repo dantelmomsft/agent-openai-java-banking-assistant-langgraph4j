@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft. All rights reserved.
-package com.microsoft.openai.samples.assistant;
+package com.microsoft.openai.samples.assistant.langgraph4j;
 
 import dev.langchain4j.data.message.ChatMessage;
 import org.bsc.langgraph4j.prebuilt.MessagesState;

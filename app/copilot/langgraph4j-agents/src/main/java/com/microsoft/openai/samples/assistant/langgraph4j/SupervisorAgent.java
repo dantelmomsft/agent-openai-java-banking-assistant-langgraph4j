@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.langchain4j.agent;
+package com.microsoft.openai.samples.assistant.langgraph4j;
 
 
 import com.microsoft.langchain4j.agent.Agent;
@@ -35,16 +35,7 @@ public class SupervisorAgent {
         Answer only with the agent name.
         if you are not able to select an agent answer with none.
         """;
-/**
-   private final String SUPERVISOR_AGENT_SYSTEM_MESSAGE = """
-        You are a banking customer support agent who help bank customers manage their banking accounts and services.
-        Based on the conversation you need to extracting the user intent.
-        The available intents are:
-        {{agentsIntents}}
-        Answer only with the intent.
-        if you are not able to select an intent answer with none.
-        """;
-**/
+
     public SupervisorAgent(ChatLanguageModel chatLanguageModel, List<Agent> agents ) {
         this.chatLanguageModel = chatLanguageModel;
 
@@ -67,7 +58,6 @@ public class SupervisorAgent {
                 .build();
 
         AiMessage aiMessage = chatLanguageModel.chat(request).aiMessage();
-
 
         return List.of( aiMessage );
     }

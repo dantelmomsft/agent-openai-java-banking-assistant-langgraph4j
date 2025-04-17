@@ -6,7 +6,7 @@ import com.microsoft.langchain4j.agent.mcp.MCPProtocolType;
 import com.microsoft.langchain4j.agent.mcp.MCPServerMetadata;
 import com.microsoft.langchain4j.agent.mcp.MCPToolAgent;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
-import com.microsoft.openai.samples.assistant.langchain4j.tools.InvoiceScanTool;
+import com.microsoft.openai.samples.assistant.langchain4j.agent.tools.InvoiceScanTool;
 import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.input.Prompt;

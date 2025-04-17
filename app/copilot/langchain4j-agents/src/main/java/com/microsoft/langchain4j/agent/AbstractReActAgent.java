@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 
 public abstract class AbstractReActAgent implements Agent {
 
@@ -67,21 +69,17 @@ public abstract class AbstractReActAgent implements Agent {
 
             // add last ai message to agent internal memory
             internalChatMemory.add(aiMessage);
-            //updateChatHistory(chatHistory, internalChatMemory);
-            return internalChatMemory.messages();
+            return buildResponse(chatHistory, internalChatMemory);
         } catch (Exception e) {
             throw new AgentExecutionException("Error during agent [%s] invocation".formatted(this.getName()), e);
         }
     }
 
-    protected void updateChatHistory(List<ChatMessage> chatHistory, ChatMemory internalChatMemory) {
-        //delete extenal messages to avoid duplication
-        chatHistory.clear();
-        //add previous history + agent internal messages
-        internalChatMemory.messages()
+    protected List<ChatMessage> buildResponse(List<ChatMessage> chatHistory, ChatMemory internalChatMemory) {
+        return internalChatMemory.messages()
             .stream()
             .filter(m -> !(m instanceof SystemMessage))
-            .forEach(chatHistory::add);
+            .collect(Collectors.toList());
     }
 
     protected List<ToolExecutionResultMessage> executeToolRequests(List<ToolExecutionRequest> toolExecutionRequests) {

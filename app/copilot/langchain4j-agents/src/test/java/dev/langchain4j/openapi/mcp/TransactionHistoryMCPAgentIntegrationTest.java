@@ -1,6 +1,5 @@
 package dev.langchain4j.openapi.mcp;
 
-import com.microsoft.openai.samples.assistant.langchain4j.agent.TransactionHistoryAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.TransactionHistoryMCPAgent;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;

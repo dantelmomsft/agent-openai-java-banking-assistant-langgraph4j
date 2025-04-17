@@ -1,6 +1,5 @@
 package com.microsoft.openai.samples.assistant.business;
 
-import com.microsoft.openai.samples.assistant.business.Transaction;
 import org.springframework.stereotype.Service;
 
 import java.util.*;

@@ -1,14 +1,12 @@
-package com.microsoft.openai.samples.assistant;
+package com.microsoft.openai.samples.assistant.langgraph4j;
 
 import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
 import com.azure.identity.AzureCliCredentialBuilder;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.PaymentMCPAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.TransactionHistoryMCPAgent;
 import com.microsoft.openai.samples.assistant.proxy.BlobStorageProxy;
-import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 import org.bsc.langgraph4j.CompileConfig;
 import org.bsc.langgraph4j.CompiledGraph;
@@ -66,9 +64,9 @@ public class AgentWorkflowBuilder {
                 accountMCPServerUrl,
                 paymentMCPServerUrl);
 
-        var superVisorAgent = new SupervisorAgent( model, List.of( accountAgent, transactionAgent, paymentAgent ) );
+        var supervisorAgent = new SupervisorAgent( model, List.of( accountAgent, transactionAgent, paymentAgent ) );
 
-        AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) -> {
+        AsyncEdgeAction<AgentWorkflowState> supervisorRoute =  edge_async((state ) -> {
 
             var nextAgent = state.nextAgent().orElseThrow();
             return Intent.names().stream()
@@ -80,13 +78,13 @@ public class AgentWorkflowBuilder {
         var serializer = new LC4jJacksonStateSerializer<>( AgentWorkflowState::new );
 
         return new StateGraph<>( AgentWorkflowState.SCHEMA, serializer )
-                .addNode( "Supervisor", SupervisorAgentNode.of( superVisorAgent ) )
+                .addNode( "Supervisor", SupervisorAgentNode.of( supervisorAgent ) )
                 .addNode( Intent.AccountAgent.name(), AgentNode.of( accountAgent ) )
                 .addNode( Intent.TransactionHistoryAgent.name(), AgentNode.of(  transactionAgent ) )
                 .addNode( Intent.PaymentAgent.name(), AgentNode.of( paymentAgent ) )
                 .addEdge(  START, "Supervisor" )
                 .addConditionalEdges( "Supervisor",
-                        superVisorRoute,
+                        supervisorRoute,
                         EdgeMappings.builder()
                                 .to( Intent.names() )
                                 .toEND("end")
