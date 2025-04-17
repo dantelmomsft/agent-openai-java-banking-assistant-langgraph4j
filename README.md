@@ -19,7 +19,7 @@ products:
 - azure-monitor
 - azure-pipelines
 urlFragment: agent-openai-java-banking-assistant
-name: Multi Agents Banking Assistant with Java and Semantic Kernel
+name: Multi Agents Banking Assistant with Java and Langchain4j
 description: A Java sample app emulating a personal banking AI-powered assistant to inquire about account balances, review recent transactions, or initiate payments
 ---
 <!-- YAML front-matter schema: https://review.learn.microsoft.com/en-us/help/contribute/samples/process/onboarding?branch=main#supported-metadata-fields-for-readmemd -->
@@ -28,7 +28,7 @@ description: A Java sample app emulating a personal banking AI-powered assistant
 
 ![](./docs/assets/robot-agents-small.png)
 
-# Multi Agents Banking Assistant with Java and LangGraph4j
+# Multi Agents Banking Assistant with Java using Langchain4j and [Langraph4j]
 
 [![Open project in GitHub Codespaces](https://img.shields.io/badge/Codespaces-Open-blue?style=flat-square&logo=github)](https://codespaces.new/azure-samples/agent-openai-java-banking-assistant?hide_repo_select=true&ref=main&quickstart=true)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/azure-samples/agent-openai-java-banking-assistant/azure-dev.yaml?style=flat-square&label=Build)](https://github.com/azure-samples/agent-openai-java-banking-assistant/actions)
@@ -44,45 +44,75 @@ description: A Java sample app emulating a personal banking AI-powered assistant
 ![](./docs/assets/ui.gif)
 </div>
 
-This project is designed as a Proof of Concept (PoC) to explore the innovative realm of generative AI within the context of multi-agent architectures. By leveraging Java and Microsoft Semantic Kernel AI orchestration framework, our aim is to build a chat web app to demonstrate the feasibility and reliability of using generative AI agents to transform user experience from web clicks to natural language conversations while maximizing reuse of the existing workload data and APIs.
-
-
 
 ## Overview
 The core use case of this Proof of Concept (PoC) revolves around a banking personal assistant designed to revolutionize the way users interact with their bank account information, transaction history, and payment functionalities. Utilizing the power of generative AI within a multi-agent architecture, this assistant aims to provide a seamless, conversational interface through which users can effortlessly access and manage their financial data.
 
 Instead of navigating through traditional web interfaces and menus, users can simply converse with the AI-powered assistant to inquire about their account balances, review recent transactions, or initiate payments. This approach not only enhances user experience by making financial management more intuitive and accessible but also leverages the existing workload data and APIs to ensure a reliable and secure service.
 
-Invoices samples are included in the data folder to make it easy to explore payments feature. The payment agent equipped with OCR tools ( Azure Document Intelligence) will lead the conversation with the user to extract the invoice data and initiate the payment process. Other account fake data as transactions, payment methods and account balance are also available to be queried by the user. All data and services are exposed as external REST APIs and consumed by the agents to provide the user with the requested information.
+Invoices samples are included in the data folder to make it easy to explore payments feature. The payment agent equipped with OCR tools ( Azure Document Intelligence) will lead the conversation with the user to extract the invoice data and initiate the payment process. Other account fake data as transactions, payment methods and account balance are also available to be queried by the user. All data and services are exposed as external REST APIs and **MCP tools** consumed by the agents to provide the user with the requested information.
 
 ## Features 
 This project provides the following features and technical patterns:
- - Simple multi ai agents Java implementation using *gpt-4o-mini* on Azure Open AI.
- - Chat intent extraction and agent routing.
- - Agents tools configuration and automatic tools invocations with [Java Semantic Kernel](https://github.com/microsoft/semantic-kernel-java/).
- - Tools output cache scoped at chat conversation level.It improves functions call planning and parameters extraction for long chat.
+ - Simple multi-agent supervisor architecture using **gpt-4o-mini** or **gpt-4o** on Azure Open AI.
+ - Exposing your business API as MCP tools for your agents using [spring-ai-mcp](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-overview.html)
+ - Agents tools configuration and automatic tools invocations with [Langchain4j](https://github.com/langchain4j/langchain4j).
+ - Multi-Agent Supervisor workflow management is developed using [Langgraph4j] 
  - Chat based conversation implemented as [React Single Page Application](https://react.fluentui.dev/?path=/docs/concepts-introduction--docs) with support for images upload.Supported images are invoices, receipts, bills jpeg/png files you want your virtual banking assistant to pay on your behalf.
  - Images scanning and data extraction with Azure Document Intelligence using [prebuilt-invoice](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept-invoice?view=doc-intel-4.0.0) model.
- - Import REST api contracts (OpenAPI yaml files) as agent tools, providing automatic rest client call. It uses code from Java Semantic Kernel [open-api-plugin code sample](https://github.com/microsoft/semantic-kernel-java/tree/main/samples/semantickernel-sample-plugins/semantickernel-openapi-plugin).
  - Add a copilot app side-by-side to your existing business microservices hosted on [Azure Container Apps](https://azure.microsoft.com/en-us/products/container-apps).
  - Automated Azure resources creation and solution deployment leveraging [Azure Developer CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/).
 
-For complex agents conversation implementation, read more about [Autogen framework](https://github.com/microsoft/autogen).
-
 ### Architecture
-![HLA](docs/assets/HLA.png)
+
+![HLA](docs/assets/HLA-MCP.png)
+
+### Multi-Agent Supervisor Workflow
+
+```mermaid
+---
+title: Banking Assistant
+---
+flowchart TD
+	__START__((start))
+	__END__((Human))
+	Supervisor("Supervisor")
+	AccountAgent("AccountAgent")
+	TransactionHistoryAgent("TransactionHistoryAgent")
+	PaymentAgent("PaymentAgent")
+	%%	condition1{"check state"}
+	__START__:::__START__ --> Supervisor:::Supervisor
+	%%	Supervisor:::Supervisor -.-> condition1:::condition1
+	%%	condition1:::condition1 -.->|TransactionHistoryAgent| TransactionHistoryAgent:::TransactionHistoryAgent
+	Supervisor:::Supervisor -.->|TransactionHistoryAgent| TransactionHistoryAgent:::TransactionHistoryAgent
+	%%	condition1:::condition1 -.->|AccountAgent| AccountAgent:::AccountAgent
+	Supervisor:::Supervisor -.->|AccountAgent| AccountAgent:::AccountAgent
+	%%	condition1:::condition1 -.->|PaymentAgent| PaymentAgent:::PaymentAgent
+	Supervisor:::Supervisor -.->|PaymentAgent| PaymentAgent:::PaymentAgent
+	%%	condition1:::condition1 -.->|end| __END__:::__END__
+	Supervisor:::Supervisor -.->|end| __END__:::__END__
+	AccountAgent:::AccountAgent --> __END__:::__END__
+	TransactionHistoryAgent:::TransactionHistoryAgent --> __END__:::__END__
+	PaymentAgent:::PaymentAgent --> __END__:::__END__
+
+	classDef ___START__ fill:black,stroke-width:1px,font-size:xx-small;
+	classDef ___END__ fill:black,stroke-width:1px,font-size:xx-small;
+
+```
+
+
 The personal banking assistant is designed as a [vertical multi-agent system](./docs/multi-agents/introduction.md), with each agent specializing in a specific functional domain (e.g., account management, transaction history, payments). The architecture consists of the following key components:
 
 - **Copilot Assistant Copilot App (Microservice)**: Serves as the central hub for processing user requests. It's a spring boot application implementing a vertical multi-agent architectures using Java Semantic Kernel to create Agents equipped with tools. in Java the Agent Router to understand user intent from chat interactions and routes the request to the appropriate domain-specific agent.
-    - **Agent Router**: Acts as a user proxy, interpreting user intent based on chat inputs and directing the request to the specific domain agent. This component ensures that user queries are efficiently handled by the relevant agent. It uses **IntentExtractor** tool backed by GPT4 model to extract the user intent in a json format. If intent is 'None' clarifying questions are provided. 
-
+    - **Supervisor Agent**: Acts as a user proxy, interpreting user intent based on chat inputs and directing the request to the specific domain agent. This component ensures that user queries are efficiently handled by the relevant agent. Agents are engaged byt the supervisor in a single turn conversation meaning that only one is selected by the supervisor to answer to user task. It’s just doing routing logic, assuming the domain agent will either carry-on the task in one shot or will involve user feedback if data oversight or action approval (like payment submit) is required.
+    
     - **Account Agent**: Specializes in handling tasks related to banking account information, credit balance, and registered payment methods. It leverages specific Account service APIs to fetch and manage account-related data. Semantic Kernel HTTP plugin is used to create a tool definition from the rest api yaml contract (Open API specification) and automatically call the HTTP endpoint with input parameters extracted by gpt4 model from the chat conversation.
 
     - **Transactions Agent**: Focuses on tasks related to querying user bank movements, including income and outcome payments. This agent accesses account api to retrieve accountid and transaction history service to search for transactions and present them to the user.
 
     - **Payments Agent**: Dedicated to managing tasks related to submitting payments. It interacts with multiple APIs and tools, such as ScanInvoice (backed by Azure Document Intelligence), Account Service to retrieve account and payment methods info, Payment Service to submit payment processing and Transaction History service to check for previous paid invoices.
 
-- **Existing Business APIs**: Interfaces with the backend systems to perform operations related to personal banking accounts, transactions, and invoice payments. These APIs are implemented as external spring boot microservices providing the necessary data and functionality consumed by agents to execute their tasks.
+- **Existing Business APIs**: Interfaces with the backend systems to perform operations related to personal banking accounts, transactions, and invoice payments. These APIs are implemented as external spring boot microservices providing the necessary data and functionality consumed by agents to execute their tasks. They are exposed both as traditional RESTs API and as MCP tools to be consumed by agents.
     - **Account Service (Microservice)**: Provides functionalities like retrieving account details by username, fetching payment methods, and getting registered beneficiaries. This microservice supports all 3 agents.
 
     - **Payments Service (Microservice)**: Offers capabilities to submit payments and notify transactions. It is a critical component for the Payments Agent to execute payment-related tasks efficiently.
@@ -111,7 +141,8 @@ All prerequisites are already installed in the container.  You can skip to the [
   * **Important**: Ensure you can run `pwsh.exe` from a PowerShell command. If this fails, you likely need to upgrade PowerShell.
 
 
->[!WARNING] Your Azure Account must have `Microsoft.Authorization/roleAssignments/write` permissions, such as [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator) or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#owner).  
+> [!WARNING]
+> Your Azure Account must have `Microsoft.Authorization/roleAssignments/write` permissions, such as [User Access Administrator](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator) or [Owner](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#owner).  
 
 ### Starting from scratch
 
@@ -392,3 +423,7 @@ trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
+
+
+
+[Langraph4j]: https://github.com/bsorrentino/langgraph4j
