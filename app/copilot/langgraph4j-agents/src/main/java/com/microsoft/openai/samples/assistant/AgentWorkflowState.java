@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft. All rights reserved.
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.openai.samples.assistant;
 
 import dev.langchain4j.data.message.ChatMessage;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -7,6 +7,7 @@ import org.bsc.langgraph4j.prebuilt.MessagesState;
 import java.util.*;
 
 public class AgentWorkflowState extends MessagesState<ChatMessage>  {
+
 
     // Required by Jackson Serialization
     public AgentWorkflowState() {
@@ -17,5 +18,8 @@ public class AgentWorkflowState extends MessagesState<ChatMessage>  {
         super( initData );
     }
 
+    public Optional<String> nextAgent() {
+           return value("nextAgent");
+    }
 
 }

@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.langchain4j.agent;
 
 public class AgentExecutionException extends RuntimeException {
     public AgentExecutionException(String message) {

@@ -1,14 +1,12 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.openai.samples.assistant;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.GraphRepresentation;
-import org.bsc.langgraph4j.RunnableConfig;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,6 +34,7 @@ public class AgentWorkflowITest {
         log.info( "\nrequest by User:\n{}", userRequest );
 
         var state = workflow.invoke( Map.of( "messages", UserMessage.from( userRequest ) ));
+
 
         assertTrue( state.isPresent() );
         assertTrue( state.get().lastMessage().isPresent() );

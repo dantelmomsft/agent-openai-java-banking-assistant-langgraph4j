@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.langchain4j.agent;
 
 import java.util.List;
 

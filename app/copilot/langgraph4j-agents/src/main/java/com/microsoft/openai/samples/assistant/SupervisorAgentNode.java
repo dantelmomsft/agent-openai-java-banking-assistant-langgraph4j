@@ -1,6 +1,7 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.openai.samples.assistant;
 
 import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
+import dev.langchain4j.data.message.AiMessage;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.NodeActionWithConfig;
@@ -31,9 +32,12 @@ public class SupervisorAgentNode implements NodeActionWithConfig<AgentWorkflowSt
     @Override
     public Map<String, Object> apply(AgentWorkflowState state, RunnableConfig config) {
 
-        var messages = agent.invoke( state.messages() );
+        var messages = agent.invoke(state.messages());
 
-        return Map.of( "messages", messages );
+        if (messages.get(0) instanceof AiMessage nextAgentMessage) {
+            return Map.of("nextAgent", nextAgentMessage.text());
+        }
 
+        throw new IllegalArgumentException("Invalid message type from Supervisor: " + messages.get(0).getClass().getName());
     }
 }

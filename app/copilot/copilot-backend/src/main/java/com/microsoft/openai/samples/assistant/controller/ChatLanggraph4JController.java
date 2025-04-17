@@ -2,8 +2,7 @@
 package com.microsoft.openai.samples.assistant.controller;
 
 
-import com.microsoft.openai.samples.assistant.agent.AgentWorkflowState;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
+import com.microsoft.openai.samples.assistant.AgentWorkflowState;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -57,6 +56,7 @@ public class ChatLanggraph4JController {
 
         LOGGER.debug("Processing chat conversation..", chatHistory.get(chatHistory.size()-1));
 
+        
         var state = langgraph4jWorflow.invoke(Map.of("messages", chatHistory));
 
         AiMessage generatedResponse = state.get().lastMessage()

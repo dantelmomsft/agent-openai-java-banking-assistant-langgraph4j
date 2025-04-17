@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <!--
-    <parent>
-        <groupId>dev.langchain4j</groupId>
-        <artifactId>langchain4j-parent</artifactId>
-        <version>1.0.0-beta1</version>
-    </parent>
--->
     <parent>
         <groupId>com.microsoft.openai.samples.assistant</groupId>
         <artifactId>copilot-parent</artifactId>
@@ -86,6 +79,7 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.5.8</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

@@ -1,5 +1,6 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.langchain4j.agent.openapi;
 
+import com.microsoft.langchain4j.agent.AbstractReActAgent;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.openapi.OpenAPIToolsImporter;

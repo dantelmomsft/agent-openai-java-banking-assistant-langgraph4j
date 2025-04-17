@@ -1,6 +1,8 @@
 package com.microsoft.openai.samples.assistant.langchain4j.agent;
 
-import com.microsoft.openai.samples.assistant.agent.*;
+import com.microsoft.langchain4j.agent.AgentMetadata;
+import com.microsoft.langchain4j.agent.openapi.OpenAPIImporterMetadata;
+import com.microsoft.langchain4j.agent.openapi.OpenAPIToolAgent;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;

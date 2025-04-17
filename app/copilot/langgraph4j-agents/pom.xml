@@ -3,28 +3,18 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.2</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<groupId>com.microsoft.openai.samples.assistant</groupId>
+		<artifactId>copilot-parent</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
-	<groupId>com.microsoft.openai.samples.assistant</groupId>
+
 	<artifactId>langgraph4j-agents</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<name>langgraph agents based implementation</name>
 
-	<properties>
-		<java.version>17</java.version>
-		<langchain4j.version>1.0.0-beta2</langchain4j.version>
-		<langgraph4j.version>1.5.5</langgraph4j.version>
-	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>com.azure</groupId>
-			<artifactId>azure-identity</artifactId>
-			<version>1.15.4</version>
-		</dependency>
 
 		<dependency>
 			<groupId>com.microsoft.openai.samples.assistant</groupId>
@@ -60,6 +50,7 @@
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-ollama</artifactId>
 			<version>${langchain4j.version}</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
@@ -67,32 +58,21 @@
 			<artifactId>langgraph4j-studio-springboot</artifactId>
 			<version>${langgraph4j.version}</version>
 		</dependency>
-
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-core</artifactId>
-		</dependency>
-
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>5.11.3</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.azure</groupId>
+			<artifactId>azure-identity</artifactId>
+			<scope>test</scope>
+		</dependency>
     </dependencies>
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>

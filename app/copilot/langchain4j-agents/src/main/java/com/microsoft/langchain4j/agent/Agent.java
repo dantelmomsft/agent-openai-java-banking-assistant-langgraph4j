@@ -1,10 +1,8 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.langchain4j.agent;
 
 import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.memory.ChatMemory;
 
 import java.util.List;
-import java.util.Map;
 
 public interface Agent {
 

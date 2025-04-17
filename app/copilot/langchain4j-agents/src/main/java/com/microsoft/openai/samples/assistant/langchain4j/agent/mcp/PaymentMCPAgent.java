@@ -1,10 +1,10 @@
 package com.microsoft.openai.samples.assistant.langchain4j.agent.mcp;
 
-import com.microsoft.openai.samples.assistant.agent.AgentExecutionException;
-import com.microsoft.openai.samples.assistant.agent.AgentMetadata;
-import com.microsoft.openai.samples.assistant.agent.mcp.MCPProtocolType;
-import com.microsoft.openai.samples.assistant.agent.mcp.MCPServerMetadata;
-import com.microsoft.openai.samples.assistant.agent.mcp.MCPToolAgent;
+import com.microsoft.langchain4j.agent.AgentExecutionException;
+import com.microsoft.langchain4j.agent.AgentMetadata;
+import com.microsoft.langchain4j.agent.mcp.MCPProtocolType;
+import com.microsoft.langchain4j.agent.mcp.MCPServerMetadata;
+import com.microsoft.langchain4j.agent.mcp.MCPToolAgent;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
 import com.microsoft.openai.samples.assistant.langchain4j.tools.InvoiceScanTool;
 import dev.langchain4j.agent.tool.ToolSpecifications;
@@ -42,6 +42,38 @@ public class PaymentMCPAgent extends MCPToolAgent {
         Current timestamp:
         '{{currentDateTime}}'
         Don't try to guess accountId,paymentMethodId from the conversation.When submitting payment always use functions to retrieve accountId, paymentMethodId.
+        
+        ### Output format
+        - Example of showing Payment information:
+            <table border="1">
+              <tr>
+                <th>Payee Name</th>
+                <td>contoso</td>
+              </tr>
+              <tr>
+                <th>Invoice ID</th>
+                <td>9524011000817857</td>
+              </tr>
+              <tr>
+                <th>Amount</th>
+                <td>€85.20</td>
+              </tr>
+              <tr>
+                <th>Payment Method</th>
+                <td>Visa (Card Number: ***477)</td>
+              </tr>
+              <tr>
+                <th>Description</th>
+                <td>Payment for invoice 9524011000817857</td>
+              </tr>
+            </table>
+            
+        - Example of showing Payment methods:
+            <ol>
+              <li><strong>Bank Transfer</strong></li>
+              <li><strong>Visa</strong> (Card Number: ***3667)</li>
+            </ol>
+        
         """;
 
     public PaymentMCPAgent(ChatLanguageModel chatModel, DocumentIntelligenceInvoiceScanHelper documentIntelligenceInvoiceScanHelper, String loggedUserName, String transactionMCPServerURL, String accountMCPServerUrl, String paymentsMCPServerUrl) {

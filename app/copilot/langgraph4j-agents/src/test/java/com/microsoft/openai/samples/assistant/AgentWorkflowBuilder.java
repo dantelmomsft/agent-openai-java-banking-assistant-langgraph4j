@@ -1,10 +1,8 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.openai.samples.assistant;
 
-import com.azure.ai.documentintelligence.DocumentIntelligenceClient;
 import com.azure.ai.documentintelligence.DocumentIntelligenceClientBuilder;
 import com.azure.identity.AzureCliCredentialBuilder;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
-import com.microsoft.openai.samples.assistant.langchain4j.agent.PaymentAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.PaymentMCPAgent;
@@ -17,10 +15,8 @@ import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphStateException;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.AsyncEdgeAction;
-import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.langchain4j.serializer.jackson.LC4jJacksonStateSerializer;
-import org.bsc.langgraph4j.state.RemoveByHash;
 import org.bsc.langgraph4j.utils.EdgeMappings;
 
 import java.util.*;
@@ -28,7 +24,6 @@ import java.util.*;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
 public class AgentWorkflowBuilder {
 
@@ -75,13 +70,9 @@ public class AgentWorkflowBuilder {
 
         AsyncEdgeAction<AgentWorkflowState> superVisorRoute =  edge_async((state ) -> {
 
-            var intent = state.lastMessage()
-                    .map( AiMessage.class::cast )
-                    .map( AiMessage::text )
-                    .orElseThrow();
-
+            var nextAgent = state.nextAgent().orElseThrow();
             return Intent.names().stream()
-                    .filter( i -> Objects.equals(i,intent ) )
+                    .filter( i -> Objects.equals(i,nextAgent ) )
                     .findFirst()
                     .orElse( "end" );
         });

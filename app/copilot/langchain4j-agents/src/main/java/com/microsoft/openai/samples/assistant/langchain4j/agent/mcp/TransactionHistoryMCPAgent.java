@@ -1,9 +1,9 @@
 package com.microsoft.openai.samples.assistant.langchain4j.agent.mcp;
 
-import com.microsoft.openai.samples.assistant.agent.AgentMetadata;
-import com.microsoft.openai.samples.assistant.agent.mcp.MCPProtocolType;
-import com.microsoft.openai.samples.assistant.agent.mcp.MCPServerMetadata;
-import com.microsoft.openai.samples.assistant.agent.mcp.MCPToolAgent;
+import com.microsoft.langchain4j.agent.AgentMetadata;
+import com.microsoft.langchain4j.agent.mcp.MCPProtocolType;
+import com.microsoft.langchain4j.agent.mcp.MCPServerMetadata;
+import com.microsoft.langchain4j.agent.mcp.MCPToolAgent;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.input.Prompt;
 import dev.langchain4j.model.input.PromptTemplate;

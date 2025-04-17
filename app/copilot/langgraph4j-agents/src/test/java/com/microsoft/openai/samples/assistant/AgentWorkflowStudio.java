@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.openai.samples.assistant;
 
 import dev.langchain4j.data.message.UserMessage;
 import org.bsc.langgraph4j.CompileConfig;

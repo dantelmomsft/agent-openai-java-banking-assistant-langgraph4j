@@ -1,5 +1,6 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.openai.samples.assistant;
 
+import com.microsoft.langchain4j.agent.Agent;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.slf4j.Logger;

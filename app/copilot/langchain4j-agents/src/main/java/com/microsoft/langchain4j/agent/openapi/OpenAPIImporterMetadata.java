@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.langchain4j.agent.openapi;
 
 public record OpenAPIImporterMetadata(String toolName, String openApiFileName, String openApiUrl) {
 }

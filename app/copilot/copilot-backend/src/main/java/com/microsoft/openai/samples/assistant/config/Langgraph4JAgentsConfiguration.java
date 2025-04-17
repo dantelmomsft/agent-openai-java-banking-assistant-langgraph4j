@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 package com.microsoft.openai.samples.assistant.config;
 
-import com.microsoft.openai.samples.assistant.agent.AgentNode;
-import com.microsoft.openai.samples.assistant.agent.AgentWorkflowState;
-import com.microsoft.openai.samples.assistant.agent.Intent;
-import com.microsoft.openai.samples.assistant.agent.SupervisorAgentNode;
+import com.microsoft.openai.samples.assistant.AgentNode;
+import com.microsoft.openai.samples.assistant.AgentWorkflowState;
+import com.microsoft.openai.samples.assistant.Intent;
+import com.microsoft.openai.samples.assistant.SupervisorAgentNode;
 import com.microsoft.openai.samples.assistant.invoice.DocumentIntelligenceInvoiceScanHelper;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.SupervisorAgent;
 import com.microsoft.openai.samples.assistant.langchain4j.agent.mcp.AccountMCPAgent;

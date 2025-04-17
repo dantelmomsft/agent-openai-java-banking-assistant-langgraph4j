@@ -1,11 +1,11 @@
 package com.microsoft.openai.samples.assistant.langchain4j.agent;
 
 
-import com.microsoft.openai.samples.assistant.agent.Agent;
-import com.microsoft.openai.samples.assistant.agent.AgentExecutionException;
-import com.microsoft.openai.samples.assistant.agent.AgentMetadata;
+import com.microsoft.langchain4j.agent.Agent;
+import com.microsoft.langchain4j.agent.AgentMetadata;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -16,7 +16,6 @@ import dev.langchain4j.model.input.PromptTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -86,7 +85,8 @@ public class SupervisorAgent {
         // filter out tool requests and tool execution results
         chatHistory.stream()
                 .filter(chatMessage -> {
-                    if (chatMessage instanceof ToolExecutionResultMessage) {
+                    if (chatMessage instanceof ToolExecutionResultMessage
+                        || chatMessage instanceof SystemMessage) {
                         return false;
                     }
                     if (chatMessage instanceof AiMessage) {

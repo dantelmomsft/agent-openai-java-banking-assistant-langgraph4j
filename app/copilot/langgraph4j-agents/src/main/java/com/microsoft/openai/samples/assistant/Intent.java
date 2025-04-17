@@ -1,4 +1,4 @@
-package com.microsoft.openai.samples.assistant.agent;
+package com.microsoft.openai.samples.assistant;
 
 import java.util.Arrays;
 import java.util.List;

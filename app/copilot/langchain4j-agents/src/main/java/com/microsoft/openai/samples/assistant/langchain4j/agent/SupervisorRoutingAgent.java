@@ -1,8 +1,8 @@
 package com.microsoft.openai.samples.assistant.langchain4j.agent;
 
-import com.microsoft.openai.samples.assistant.agent.Agent;
-import com.microsoft.openai.samples.assistant.agent.AgentExecutionException;
-import com.microsoft.openai.samples.assistant.agent.AgentMetadata;
+import com.microsoft.langchain4j.agent.Agent;
+import com.microsoft.langchain4j.agent.AgentExecutionException;
+import com.microsoft.langchain4j.agent.AgentMetadata;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;

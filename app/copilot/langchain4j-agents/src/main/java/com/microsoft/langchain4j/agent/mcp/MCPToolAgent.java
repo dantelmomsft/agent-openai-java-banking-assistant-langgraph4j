@@ -1,8 +1,8 @@
-package com.microsoft.openai.samples.assistant.agent.mcp;
+package com.microsoft.langchain4j.agent.mcp;
 
-import com.microsoft.openai.samples.assistant.agent.AbstractReActAgent;
+import com.microsoft.langchain4j.agent.AbstractReActAgent;
 
-import com.microsoft.openai.samples.assistant.agent.AgentExecutionException;
+import com.microsoft.langchain4j.agent.AgentExecutionException;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
